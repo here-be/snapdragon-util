@@ -124,20 +124,27 @@ utils.visit = function(node, options, fn) {
  * @api public
  */
 
-utils.mapVisit = function(node, options, fn) {
+utils.mapVisit = function(parent, options, fn) {
   if (typeof options === 'function') {
     fn = options;
     options = {};
   }
 
-  var nodes = node.nodes || node.children;
+  var nodes = parent.nodes || parent.children;
   if (!Array.isArray(nodes)) {
-    throw new TypeError('.mapVisit: exected node.nodes to be an array');
+    throw new TypeError('.mapVisit: exected parent.nodes to be an array');
   }
+
   for (var i = 0; i < nodes.length; i++) {
-    var tok = nodes[i];
-    define(tok, 'parent', node);
-    utils.visit(tok, options, fn);
+    var node = nodes[i];
+    define(node, 'parent', parent);
+    node.index = i;
+    nodes[i] = utils.visit(node, options, fn) || node;
+
+    // reset properties on `nodes[i]` in case the returned
+    // node was user-defined and the properties were lost
+    define(nodes[i], 'parent', parent);
+    nodes[i].index = i;
   }
   return node;
 };
