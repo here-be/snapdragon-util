@@ -2,6 +2,7 @@
 
 var typeOf = require('kind-of');
 var define = require('define-property');
+var Node = require('snapdragon-node');
 
 /**
  * Expose `utils`
@@ -138,13 +139,11 @@ utils.mapVisit = function(parent, options, fn) {
   for (var i = 0; i < nodes.length; i++) {
     var node = nodes[i];
     define(node, 'parent', parent);
-    node.index = i;
     nodes[i] = utils.visit(node, options, fn) || node;
 
     // reset properties on `nodes[i]` in case the returned
     // node was user-defined and the properties were lost
     define(nodes[i], 'parent', parent);
-    nodes[i].index = i;
   }
   return node;
 };
@@ -159,16 +158,87 @@ utils.mapVisit = function(parent, options, fn) {
  */
 
 utils.wrapNodes = function(node, filter) {
-  if (!node.nodes) return;
+  utils.addOpen(node, filter);
+  utils.addClose(node, filter);
+};
+
+/**
+ * Unshift an `*.open` node onto `node.nodes`.
+ *
+ * @param {Object} `node`
+ * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
+ * @return {undefined}
+ * @api public
+ */
+
+utils.addOpen = function(node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
-  var open = { type: node.type + '.open', val: ''};
-  var close = { type: node.type + '.close', val: ''};
+  var open = new Node({ type: node.type + '.open', val: ''});
+  if (node.isNode && node.pushNode) {
+    node.unshiftNode(open);
+  } else {
+    utils.unshiftNode(node, open);
+  }
+};
 
-  define(open, 'parent', node);
-  define(close, 'parent', node);
+/**
+ * Push a `*.close` node onto `node.nodes`.
+ *
+ * @param {Object} `node`
+ * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
+ * @return {undefined}
+ * @api public
+ */
 
-  node.nodes.unshift(open);
-  node.nodes.push(close);
+utils.addClose = function(node, filter) {
+  if (typeof filter === 'function' && !filter(node)) return;
+  var close = new Node({ type: node.type + '.close', val: ''});
+  if (node.isNode && node.pushNode) {
+    node.pushNode(close);
+  } else {
+    utils.pushNode(node, close);
+  }
+};
+
+/**
+ * Push `node` onto `parent.nodes`.
+ *
+ * ```js
+ * var parent = new Node({type: 'foo'});
+ * var node = new Node({type: 'bar'});
+ * utils.pushNode(parent, node);
+ * console.log(parent.nodes[0].type) // 'bar'
+ * ```
+ * @param {Object} `node`
+ * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
+ * @return {undefined}
+ * @api public
+ */
+
+utils.pushNode = function(parent, node) {
+  parent.nodes = parent.nodes || [];
+  node.define('parent', parent);
+  parent.nodes.push(node);
+};
+
+/**
+ * Unshift `node` onto `parent.nodes`.
+ *
+ * ```js
+ * var parent = new Node({type: 'foo'});
+ * var node = new Node({type: 'bar'});
+ * utils.unshiftNode(parent, node);
+ * console.log(parent.nodes[0].type) // 'bar'
+ * ```
+ * @param {Object} `node`
+ * @return {undefined}
+ * @api public
+ */
+
+utils.unshiftNode = function(parent, node) {
+  parent.nodes = parent.nodes || [];
+  node.define('parent', parent);
+  parent.nodes.unshift(node);
 };
 
 /**
@@ -184,26 +254,11 @@ utils.last = function(arr, n) {
 };
 
 /**
- * Return true if `nodes` has the given `type`
- */
-
-utils.hasType = function(node, type) {
-  var nodes = node.nodes || node.children;
-  if (!Array.isArray(nodes)) return;
-  for (var i = 0; i < nodes.length; i++) {
-    if (nodes[i].type === type) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
  * Return true if node is the given `type`
  */
 
 utils.isType = function(node, type) {
-  if (typeOf(node) !== 'object') {
+  if (typeOf(node) !== 'object' || !node.type) {
     throw new TypeError('expected node to be an object');
   }
   switch (typeOf(type)) {
@@ -223,6 +278,20 @@ utils.isType = function(node, type) {
       throw new TypeError('expected "type" to be an array, string or regexp');
     }
   }
+};
+
+/**
+ * Return true if `nodes` has the given `type`
+ */
+
+utils.hasType = function(node, type) {
+  if (!Array.isArray(node.nodes)) return false;
+  for (var i = 0; i < node.nodes.length; i++) {
+    if (utils.isType(node.nodes[i], type)) {
+      return true;
+    }
+  }
+  return false;
 };
 
 /**
@@ -249,10 +318,24 @@ utils.firstOfType = function(nodes, type) {
 
   for (var i = 0; i < nodes.length; i++) {
     var node = nodes[i];
-    if (node.type === type) {
+    if (utils.isType(node, type)) {
       return node;
     }
   }
+};
+
+/**
+ * Get the a node from `node.nodes`. If `type` is a number, the
+ * node at that index is returned, otherwise [.firstOfType()](#firstOfType)
+ * is called to get the first node that matches the given `type`.
+ */
+
+utils.getNode = function(nodes, type) {
+  if (!Array.isArray(nodes)) return;
+  if (typeof type === 'number') {
+    return nodes[type];
+  }
+  return utils.firstOfType(nodes, type);
 };
 
 /**
