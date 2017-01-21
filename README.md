@@ -2,6 +2,14 @@
 
 > Utilities for the snapdragon parser/compiler.
 
+<details>
+<summary><strong>Table of Contents</strong></summary>
+- [Install](#install)
+- [Usage](#usage)
+- [API](#api)
+- [About](#about)
+</details>
+
 ## Install
 
 Install with [npm](https://www.npmjs.com/):
