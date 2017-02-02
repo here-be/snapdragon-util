@@ -22,7 +22,7 @@
   "dependencies": {
     "define-property": "^0.2.5",
     "kind-of": "^3.1.0",
-    "snapdragon-node": "^1.0.0"
+    "snapdragon-node": "^1.0.3"
   },
   "devDependencies": {
     "gulp-format-md": "^0.1.11",
@@ -32,12 +32,17 @@
   },
   "keywords": [
     "capture",
+    "compile",
+    "compiler",
+    "convert",
     "match",
     "parse",
     "parser",
     "plugin",
+    "render",
     "snapdragon",
     "snapdragonplugin",
+    "transform",
     "util"
   ],
   "verb": {
