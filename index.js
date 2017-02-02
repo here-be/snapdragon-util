@@ -2,7 +2,7 @@
 
 var typeOf = require('kind-of');
 var define = require('define-property');
-var Node = require('snapdragon-node');
+var AstNode = require('snapdragon-node');
 
 /**
  * Expose `utils`
@@ -173,7 +173,7 @@ utils.wrapNodes = function(node, filter) {
 
 utils.addOpen = function(node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
-  var open = new Node({ type: node.type + '.open', val: ''});
+  var open = new AstNode({ type: node.type + '.open', val: ''});
   if (node.isNode && node.pushNode) {
     node.unshiftNode(open);
   } else {
@@ -192,7 +192,7 @@ utils.addOpen = function(node, filter) {
 
 utils.addClose = function(node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
-  var close = new Node({ type: node.type + '.close', val: ''});
+  var close = new AstNode({ type: node.type + '.close', val: ''});
   if (node.isNode && node.pushNode) {
     node.pushNode(close);
   } else {
@@ -204,8 +204,8 @@ utils.addClose = function(node, filter) {
  * Push `node` onto `parent.nodes`.
  *
  * ```js
- * var parent = new Node({type: 'foo'});
- * var node = new Node({type: 'bar'});
+ * var parent = new AstNode({type: 'foo'});
+ * var node = new AstNode({type: 'bar'});
  * utils.pushNode(parent, node);
  * console.log(parent.nodes[0].type) // 'bar'
  * ```
@@ -225,8 +225,8 @@ utils.pushNode = function(parent, node) {
  * Unshift `node` onto `parent.nodes`.
  *
  * ```js
- * var parent = new Node({type: 'foo'});
- * var node = new Node({type: 'bar'});
+ * var parent = new AstNode({type: 'foo'});
+ * var node = new AstNode({type: 'bar'});
  * utils.unshiftNode(parent, node);
  * console.log(parent.nodes[0].type) // 'bar'
  * ```
