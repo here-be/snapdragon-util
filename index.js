@@ -173,6 +173,9 @@ utils.wrapNodes = function(node, filter) {
 
 utils.addOpen = function(node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
+  if (typeof AstNode !== 'function') {
+    throw new TypeError('AstNode: ' + util.inspect(AstNode));
+  }
   var open = new AstNode({ type: node.type + '.open', val: ''});
   if (node.isNode && node.pushNode) {
     node.unshiftNode(open);
