@@ -1,7 +1,7 @@
 {
   "name": "snapdragon-util",
   "description": "Utilities for the snapdragon parser/compiler.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "homepage": "https://github.com/jonschlinkert/snapdragon-util",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "jonschlinkert/snapdragon-util",
