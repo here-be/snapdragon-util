@@ -26,7 +26,7 @@ var util = require('snapdragon-util');
 
 ## API
 
-### [.noop](index.js#L17)
+### [.noop](index.js#L18)
 
 Emit an empty string to effectively "skip" the string for the given `node`, but still emit the position and node type.
 
@@ -41,7 +41,7 @@ Emit an empty string to effectively "skip" the string for the given `node`, but 
 snapdragon.compiler.set('bos', utils.noop);
 ```
 
-### [.emit](index.js#L37)
+### [.emit](index.js#L38)
 
 Emit an empty string to effectively "skip" the string for the given `node`, but still emit the position and node type.
 
@@ -60,7 +60,7 @@ snapdragon.compiler
   .set('i.close', utils.emit('</i>'))
 ```
 
-### [.toNoop](index.js#L54)
+### [.toNoop](index.js#L55)
 
 Converts an AST node into an empty `text` node and delete `node.nodes`.
 
@@ -75,7 +75,7 @@ utils.toNoop(node);
 utils.toNoop(node, true); // convert `node.nodes` to an empty array
 ```
 
-### [.visit](index.js#L84)
+### [.visit](index.js#L85)
 
 Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon automatically calls registered compilers, this allows you to pass a visitor function.
 
@@ -97,7 +97,7 @@ snapdragon.compiler
   })
 ```
 
-### [.mapVisit](index.js#L120)
+### [.mapVisit](index.js#L121)
 
 Map [visit](#visit) with the given `fn` over an array of AST `nodes`.
 
@@ -113,17 +113,18 @@ snapdragon.compiler
   })
 ```
 
-### [.wrapNodes](index.js#L152)
+### [.wrapNodes](index.js#L154)
 
 Wrap the given `node` with `*.open` and `*.close` tags.
 
 **Params**
 
-* `node` **{Object}**
+* `node` **{Object}**: (required)
+* `Node` **{Function}**: (required)
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.addOpen](index.js#L166)
+### [.addOpen](index.js#L168)
 
 Unshift an `*.open` node onto `node.nodes`.
 
@@ -133,7 +134,7 @@ Unshift an `*.open` node onto `node.nodes`.
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.addClose](index.js#L185)
+### [.addClose](index.js#L187)
 
 Push a `*.close` node onto `node.nodes`.
 
@@ -143,7 +144,7 @@ Push a `*.close` node onto `node.nodes`.
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.pushNode](index.js#L210)
+### [.pushNode](index.js#L212)
 
 Push `node` onto `parent.nodes`.
 
@@ -162,7 +163,7 @@ utils.pushNode(parent, node);
 console.log(parent.nodes[0].type) // 'bar'
 ```
 
-### [.unshiftNode](index.js#L230)
+### [.unshiftNode](index.js#L232)
 
 Unshift `node` onto `parent.nodes`.
 
@@ -180,7 +181,7 @@ utils.unshiftNode(parent, node);
 console.log(parent.nodes[0].type) // 'bar'
 ```
 
-### [.firstOfType](index.js#L306)
+### [.firstOfType](index.js#L308)
 
 Return the first node from `nodes` of the given `type`
 
@@ -201,7 +202,7 @@ snapdragon.set('div', function(node) {
 });
 ```
 
-### [.arrayify](index.js#L505)
+### [.arrayify](index.js#L507)
 
 Cast the given `val` to an array.
 
@@ -210,7 +211,7 @@ Cast the given `val` to an array.
 * `val` **{any}**
 * `returns` **{Array}**
 
-### [.stringify](index.js#L518)
+### [.stringify](index.js#L520)
 
 Convert the given `val` to a string by joining with `,`. Useful
 for creating a selector from a list of strings.
