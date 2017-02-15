@@ -1,6 +1,7 @@
 'use strict';
 
-var utils = require('./utils');
+var define = require('define-property');
+var typeOf = require('kind-of');
 
 /**
  * Emit an empty string to effectively "skip" the string for the given `node`,
@@ -87,10 +88,10 @@ exports.visit = function(node, options, fn) {
     options = {};
   }
 
-  if (utils.typeOf(node) !== 'object') {
+  if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
-  if (utils.typeOf(fn) !== 'function') {
+  if (typeOf(fn) !== 'function') {
     throw new TypeError('expected visitor to be a function');
   }
 
@@ -130,12 +131,12 @@ exports.mapVisit = function(parent, options, fn) {
 
   for (var i = 0; i < nodes.length; i++) {
     var node = nodes[i];
-    utils.define(node, 'parent', parent);
+    define(node, 'parent', parent);
     nodes[i] = exports.visit(node, options, fn) || node;
 
     // reset properties on `nodes[i]` in case the returned
     // node was user-defined and the properties were lost
-    utils.define(nodes[i], 'parent', parent);
+    define(nodes[i], 'parent', parent);
   }
   return node;
 };
@@ -143,15 +144,16 @@ exports.mapVisit = function(parent, options, fn) {
 /**
  * Wrap the given `node` with `*.open` and `*.close` tags.
  *
- * @param {Object} `node`
+ * @param {Object} `node` (required)
+ * @param {Function} `Node` (required)
  * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
  * @return {undefined}
  * @api public
  */
 
-exports.wrapNodes = function(node, filter) {
-  exports.addOpen(node, filter);
-  exports.addClose(node, filter);
+exports.wrapNodes = function(node, Node, filter) {
+  exports.addOpen(node, Node, filter);
+  exports.addClose(node, Node, filter);
 };
 
 /**
@@ -163,9 +165,9 @@ exports.wrapNodes = function(node, filter) {
  * @api public
  */
 
-exports.addOpen = function(node, filter) {
+exports.addOpen = function(node, Node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
-  var open = new utils.Node({ type: node.type + '.open', val: ''});
+  var open = new Node({ type: node.type + '.open', val: ''});
   if (node.isNode && node.pushNode) {
     node.unshiftNode(open);
   } else {
@@ -182,9 +184,9 @@ exports.addOpen = function(node, filter) {
  * @api public
  */
 
-exports.addClose = function(node, filter) {
+exports.addClose = function(node, Node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
-  var close = new utils.Node({ type: node.type + '.close', val: ''});
+  var close = new Node({ type: node.type + '.close', val: ''});
   if (node.isNode && node.pushNode) {
     node.pushNode(close);
   } else {
@@ -250,10 +252,10 @@ exports.last = function(arr, n) {
  */
 
 exports.isType = function(node, type) {
-  if (utils.typeOf(node) !== 'object' || !node.type) {
+  if (typeOf(node) !== 'object' || !node.type) {
     throw new TypeError('expected node to be an object');
   }
-  switch (utils.typeOf(type)) {
+  switch (typeOf(type)) {
     case 'array':
       var types = type.slice();
       for (var i = 0; i < types.length; i++) {
@@ -335,7 +337,7 @@ exports.getNode = function(nodes, type) {
  */
 
 exports.isOpen = function(node) {
-  if (utils.typeOf(node) !== 'object' || typeof node.type !== 'string') {
+  if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
   return node.type.slice(-5) === '.open';
@@ -346,7 +348,7 @@ exports.isOpen = function(node) {
  */
 
 exports.isClose = function(node) {
-  if (utils.typeOf(node) !== 'object' || typeof node.type !== 'string') {
+  if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
   return node.type.slice(-6) === '.close';
@@ -357,7 +359,7 @@ exports.isClose = function(node) {
  */
 
 exports.hasOpen = function(node) {
-  if (utils.typeOf(node) !== 'object' || typeof node.type !== 'string') {
+  if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
   return node.nodes && node.nodes[0].type === (node.type + '.open');
@@ -368,7 +370,7 @@ exports.hasOpen = function(node) {
  */
 
 exports.hasClose = function(node) {
-  if (utils.typeOf(node) !== 'object' || typeof node.type !== 'string') {
+  if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
   return node.nodes && exports.last(node.nodes).type === (node.type + '.close');
@@ -387,10 +389,10 @@ exports.hasOpenAndClose = function(node) {
  */
 
 exports.addType = function(state, node) {
-  if (utils.typeOf(state) !== 'object') {
+  if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
-  if (utils.typeOf(node) !== 'object') {
+  if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
   var type = node.type.replace(/\.open$/, '');
@@ -405,10 +407,10 @@ exports.addType = function(state, node) {
  */
 
 exports.removeType = function(state, node) {
-  if (utils.typeOf(state) !== 'object') {
+  if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
-  if (utils.typeOf(node) !== 'object') {
+  if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
 
@@ -425,7 +427,7 @@ exports.removeType = function(state, node) {
  */
 
 exports.isEmptyNodes = function(node, prefix) {
-  if (utils.typeOf(node) !== 'object') {
+  if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
   if (!Array.isArray(node.nodes)) {
@@ -447,7 +449,7 @@ exports.isEmptyNodes = function(node, prefix) {
  */
 
 exports.isInsideType = function(state, type) {
-  if (utils.typeOf(state) !== 'object') {
+  if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
   return state.inside.hasOwnProperty(type) && state.inside[type].length > 0;
@@ -458,10 +460,10 @@ exports.isInsideType = function(state, type) {
  */
 
 exports.isInside = function(state, node, type) {
-  if (utils.typeOf(state) !== 'object') {
+  if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
-  if (utils.typeOf(node) !== 'object') {
+  if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
 
@@ -479,7 +481,7 @@ exports.isInside = function(state, node, type) {
     return exports.isInsideType(state, type) || parent.type === type;
   }
 
-  if (utils.typeOf(type) === 'regexp') {
+  if (typeOf(type) === 'regexp') {
     if (parent.type && type.test(parent.type)) {
       return true;
     }
