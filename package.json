@@ -10,8 +10,7 @@
   },
   "license": "MIT",
   "files": [
-    "index.js",
-    "utils.js"
+    "index.js"
   ],
   "main": "index.js",
   "engines": {
@@ -19,6 +18,17 @@
   },
   "scripts": {
     "test": "mocha"
+  },
+  "dependencies": {
+    "define-property": "^0.2.5",
+    "kind-of": "^3.1.0"
+  },
+  "devDependencies": {
+    "gulp-format-md": "^0.1.11",
+    "mocha": "^3.2.0",
+    "snapdragon": "^0.10.1",
+    "snapdragon-capture-set": "^1.0.1",
+    "snapdragon-node": "^1.0.6"
   },
   "keywords": [
     "capture",
@@ -35,17 +45,6 @@
     "transform",
     "util"
   ],
-  "dependencies": {
-    "define-property": "^0.2.5",
-    "kind-of": "^3.1.0"
-  },
-  "devDependencies": {
-    "gulp-format-md": "^0.1.11",
-    "mocha": "^3.2.0",
-    "snapdragon": "^0.10.1",
-    "snapdragon-capture-set": "^1.0.1",
-    "snapdragon-node": "^1.0.6"
-  },
   "verb": {
     "toc": "collapsible",
     "layout": "default",
