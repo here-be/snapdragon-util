@@ -4,14 +4,29 @@ var define = require('define-property');
 var typeOf = require('kind-of');
 
 /**
- * Emit an empty string to effectively "skip" the string for the given `node`,
- * but still emit the position and node type.
+ * Returns true if the given value is a node.
+ *
+ * ```js
+ * var node = snapdragon.parser.node({type: 'foo'});
+ * console.log(utils.isNode(node)); //=> true
+ * console.log(utils.isNode({})); //=> false
+ * ```
+ * @param {Object} `node`
+ * @api public
+ */
+
+exports.isNode = function(node) {
+  return typeOf(node) === 'object' && node.isNode;
+};
+
+/**
+ * Emit an empty string for the given `node`.
  *
  * ```js
  * // do nothing for beginning-of-string
  * snapdragon.compiler.set('bos', utils.noop);
  * ```
- * @param {Object} node
+ * @param {Object} `node`
  * @api public
  */
 
@@ -20,8 +35,8 @@ exports.noop = function(node) {
 };
 
 /**
- * Emit an empty string to effectively "skip" the string for the given `node`,
- * but still emit the position and node type.
+ * Emit `val` for the given node. Useful when you know what needs to be
+ * emitted in advance and you don't need to access the actual node.
  *
  * ```js
  * snapdragon.compiler
@@ -31,7 +46,7 @@ exports.noop = function(node) {
  *   .set('i.open', utils.emit('<i>'))
  *   .set('i.close', utils.emit('</i>'))
  * ```
- * @param {Object} node
+ * @param {Object} `node`
  * @api public
  */
 
@@ -42,19 +57,20 @@ exports.emit = function(val) {
 };
 
 /**
- * Converts an AST node into an empty `text` node and delete `node.nodes`.
+ * Converts an AST node into an empty `text` node and deletes `node.nodes`.
  *
  * ```js
  * utils.toNoop(node);
- * utils.toNoop(node, true); // convert `node.nodes` to an empty array
+ * // convert `node.nodes` to the given value instead of deleting it
+ * utils.toNoop(node, []);
  * ```
  * @param {Object} `node`
  * @api public
  */
 
-exports.toNoop = function(node, keepNodes) {
-  if (keepNodes === true) {
-    node.nodes = [];
+exports.toNoop = function(node, nodes) {
+  if (nodes) {
+    node.nodes = nodes;
   } else {
     delete node.nodes;
   }
@@ -68,15 +84,15 @@ exports.toNoop = function(node, keepNodes) {
  * function.
  *
  * ```js
- * snapdragon.compiler
- *   .set('i', function(node) {
- *     exports.visit(node, function(node2) {
- *       // do stuff with "node2"
- *       return node2;
- *     });
- *   })
+ * snapdragon.compiler.set('i', function(node) {
+ *   utils.visit(node, function(node2) {
+ *     // do stuff with "node2"
+ *     return node2;
+ *   });
+ * });
  * ```
  * @param {Object} `node`
+ * @param {Object} `options` Set `options.recurse` to true call recursively call `mapVisit` on `node.nodes`.
  * @param {Function} `fn`
  * @return {Object} returns the node
  * @api public
@@ -107,45 +123,43 @@ exports.visit = function(node, options, fn) {
  * Map [visit](#visit) with the given `fn` over an array of AST `nodes`.
  *
  * ```js
- * snapdragon.compiler
- *   .set('i', function(node) {
- *     exports.mapVisit(node, function(node2) {
- *       // do stuff with "node2"
- *       return node2;
- *     });
- *   })
+ * snapdragon.compiler.set('i', function(node) {
+ *   utils.mapVisit(node, function(node2) {
+ *     // do stuff with "node2"
+ *     return node2;
+ *   });
+ * });
  * ```
+ * @param {Object} `node`
+ * @param {Object} `options`
+ * @param {Function} `fn`
+ * @return {Object} returns the node
  * @api public
  */
 
-exports.mapVisit = function(parent, options, fn) {
+exports.mapVisit = function(node, options, fn) {
   if (typeof options === 'function') {
     fn = options;
     options = {};
   }
 
-  var nodes = parent.nodes || parent.children;
-  if (!Array.isArray(nodes)) {
-    throw new TypeError('.mapVisit: exected parent.nodes to be an array');
+  if (!Array.isArray(node.nodes)) {
+    throw new TypeError('.mapVisit: exected node.nodes to be an array');
   }
 
-  for (var i = 0; i < nodes.length; i++) {
-    var node = nodes[i];
-    define(node, 'parent', parent);
-    nodes[i] = exports.visit(node, options, fn) || node;
-
-    // reset properties on `nodes[i]` in case the returned
-    // node was user-defined and the properties were lost
-    define(nodes[i], 'parent', parent);
+  for (var i = 0; i < node.nodes.length; i++) {
+    var childNode = node.nodes[i];
+    define(childNode, 'parent', node);
+    exports.visit(childNode, options, fn) || childNode;
   }
   return node;
 };
 
 /**
- * Wrap the given `node` with `*.open` and `*.close` tags.
+ * Wraps the given `node` with `*.open` and `*.close` nodes.
  *
  * @param {Object} `node` (required)
- * @param {Function} `Node` (required)
+ * @param {Function} `Node` (required) Node constructor function from [snapdragon-node][].
  * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
  * @return {undefined}
  * @api public
@@ -160,6 +174,7 @@ exports.wrapNodes = function(node, Node, filter) {
  * Unshift an `*.open` node onto `node.nodes`.
  *
  * @param {Object} `node`
+ * @param {Function} `Node` (required) Node constructor function from [snapdragon-node][].
  * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
  * @return {undefined}
  * @api public
@@ -179,6 +194,7 @@ exports.addOpen = function(node, Node, filter) {
  * Push a `*.close` node onto `node.nodes`.
  *
  * @param {Object} `node`
+ * @param {Function} `Node` (required) Node constructor function from [snapdragon-node][].
  * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
  * @return {undefined}
  * @api public
@@ -195,16 +211,17 @@ exports.addClose = function(node, Node, filter) {
 };
 
 /**
- * Push `node` onto `parent.nodes`.
+ * Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
  * ```js
  * var parent = new Node({type: 'foo'});
  * var node = new Node({type: 'bar'});
  * utils.pushNode(parent, node);
  * console.log(parent.nodes[0].type) // 'bar'
+ * console.log(node.parent.type) // 'foo'
  * ```
+ * @param {Object} `parent`
  * @param {Object} `node`
- * @param {Function} `filter` Optionaly specify a filter function to exclude the node.
  * @return {undefined}
  * @api public
  */
@@ -216,14 +233,16 @@ exports.pushNode = function(parent, node) {
 };
 
 /**
- * Unshift `node` onto `parent.nodes`.
+ * Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
  * ```js
  * var parent = new Node({type: 'foo'});
  * var node = new Node({type: 'bar'});
  * utils.unshiftNode(parent, node);
  * console.log(parent.nodes[0].type) // 'bar'
+ * console.log(node.parent.type) // 'foo'
  * ```
+ * @param {Object} `parent`
  * @param {Object} `node`
  * @return {undefined}
  * @api public
@@ -236,19 +255,19 @@ exports.unshiftNode = function(parent, node) {
 };
 
 /**
- * Get the last `n` element from the given `array`. Used for getting
- * a node from `node.nodes.`
+ * Returns true if `node` is a valid [Node][snapdragon-node] and
+ * `node.type` matches the given `type`.
  *
- * @param {Array} `array`
- * @return {*}
- */
-
-exports.last = function(arr, n) {
-  return arr[arr.length - (n || 1)];
-};
-
-/**
- * Return true if node is the given `type`
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var node = new Node({type: 'foo'});
+ * console.log(utils.isType(node, 'foo')); // false
+ * console.log(utils.isType(node, 'bar')); // true
+ * ```
+ * @param {Object} `node`
+ * @param {String} `type`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.isType = function(node, type) {
@@ -275,7 +294,24 @@ exports.isType = function(node, type) {
 };
 
 /**
- * Return true if `nodes` has the given `type`
+ * Returns true if the given `node` has the given `type` in `node.nodes`.
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var node = new Node({
+ *   type: 'foo',
+ *   nodes: [
+ *     new Node({type: 'bar'}),
+ *     new Node({type: 'baz'})
+ *   ]
+ * });
+ * console.log(utils.hasType(node, 'xyz')); // false
+ * console.log(utils.hasType(node, 'baz')); // true
+ * ```
+ * @param {Object} `node`
+ * @param {String} `type`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.hasType = function(node, type) {
@@ -289,19 +325,24 @@ exports.hasType = function(node, type) {
 };
 
 /**
- * Return the first node from `nodes` of the given `type`
+ * Returns the first node from `node.nodes` of the given `type`
  *
  * ```js
- * snapdragon.set('div', function(node) {
- *  var textNode = exports.firstOfType(node.nodes, 'text');
- *  if (textNode) {
- *    // do stuff with text node
- *  }
+ * var node = new Node({
+ *   type: 'foo',
+ *   nodes: [
+ *     new Node({type: 'text', val: 'abc'}),
+ *     new Node({type: 'text', val: 'xyz'})
+ *   ]
  * });
+ *
+ * var textNode = utils.firstOfType(node.nodes, 'text');
+ * console.log(textNode.val);
+ * //=> 'abc'
  * ```
  * @param {Array} `nodes`
  * @param {String} `type`
- * @return {Object} Returns a node, if found
+ * @return {Object|undefined} Returns the first matching node or undefined.
  * @api public
  */
 
@@ -319,9 +360,31 @@ exports.firstOfType = function(nodes, type) {
 };
 
 /**
- * Get the a node from `node.nodes`. If `type` is a number, the
- * node at that index is returned, otherwise [.firstOfType()](#firstOfType)
- * is called to get the first node that matches the given `type`.
+ * Returns the node at the specified index, or the first node of the
+ * given `type` from `node.nodes`.
+ *
+ * ```js
+ * var node = new Node({
+ *   type: 'foo',
+ *   nodes: [
+ *     new Node({type: 'text', val: 'abc'}),
+ *     new Node({type: 'text', val: 'xyz'})
+ *   ]
+ * });
+ *
+ * var nodeOne = utils.getNode(node.nodes, 'text');
+ * console.log(nodeOne.val);
+ * //=> 'abc'
+ *
+ * var nodeTwo = utils.getNode(node.nodes, 1);
+ * console.log(nodeTwo.val);
+ * //=> 'xyz'
+ * ```
+ *
+ * @param {Array} `nodes`
+ * @param {String|Number} `type` Node type or index.
+ * @return {Object} Returns a node or undefined.
+ * @api public
  */
 
 exports.getNode = function(nodes, type) {
@@ -333,7 +396,21 @@ exports.getNode = function(nodes, type) {
 };
 
 /**
- * Return true if node is for an "open" tag
+ * Returns true if the given node is an "*.open" node.
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var brace = new Node({type: 'brace'});
+ * var open = new Node({type: 'brace.open'});
+ * var close = new Node({type: 'brace.close'});
+ *
+ * console.log(utils.isOpen(brace)); // false
+ * console.log(utils.isOpen(open)); // true
+ * console.log(utils.isOpen(close)); // false
+ * ```
+ * @param {Object} `node`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.isOpen = function(node) {
@@ -344,7 +421,21 @@ exports.isOpen = function(node) {
 };
 
 /**
- * Return true if node is for a "close" tag
+ * Returns true if the given node is a "*.close" node.
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var brace = new Node({type: 'brace'});
+ * var open = new Node({type: 'brace.open'});
+ * var close = new Node({type: 'brace.close'});
+ *
+ * console.log(utils.isClose(brace)); // false
+ * console.log(utils.isClose(open)); // false
+ * console.log(utils.isClose(close)); // true
+ * ```
+ * @param {Object} `node`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.isClose = function(node) {
@@ -355,7 +446,24 @@ exports.isClose = function(node) {
 };
 
 /**
- * Return true if `node.nodes` has an `.open` node
+ * Returns true if `node.nodes` **has** an `.open` node
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var brace = new Node({
+ *   type: 'brace',
+ *   nodes: []
+ * });
+ *
+ * var open = new Node({type: 'brace.open'});
+ * console.log(utils.hasOpen(brace)); // false
+ *
+ * brace.addNode(open);
+ * console.log(utils.hasOpen(brace)); // true
+ * ```
+ * @param {Object} `node`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.hasOpen = function(node) {
@@ -366,7 +474,24 @@ exports.hasOpen = function(node) {
 };
 
 /**
- * Return true if `node.nodes` has a `.close` node
+ * Returns true if `node.nodes` **has** a `.close` node
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var brace = new Node({
+ *   type: 'brace',
+ *   nodes: []
+ * });
+ *
+ * var close = new Node({type: 'brace.close'});
+ * console.log(utils.hasClose(brace)); // false
+ *
+ * brace.addNode(close);
+ * console.log(utils.hasClose(brace)); // true
+ * ```
+ * @param {Object} `node`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.hasClose = function(node) {
@@ -377,7 +502,28 @@ exports.hasClose = function(node) {
 };
 
 /**
- * Return true if `node.nodes` has both `.open` and `.close` nodes
+ * Returns true if `node.nodes` has both `.open` and `.close` nodes
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var brace = new Node({
+ *   type: 'brace',
+ *   nodes: []
+ * });
+ *
+ * var open = new Node({type: 'brace.open'});
+ * var close = new Node({type: 'brace.close'});
+ * console.log(utils.hasOpen(brace)); // false
+ * console.log(utils.hasClose(brace)); // false
+ *
+ * brace.addNode(open);
+ * brace.addNode(close);
+ * console.log(utils.hasOpen(brace)); // true
+ * console.log(utils.hasClose(brace)); // true
+ * ```
+ * @param {Object} `node`
+ * @return {Boolean}
+ * @api public
  */
 
 exports.hasOpenAndClose = function(node) {
@@ -385,7 +531,13 @@ exports.hasOpenAndClose = function(node) {
 };
 
 /**
- * Add the given `node` to the `state.inside` stack for that type.
+ * Push the given `node` onto the `state.inside` array for the
+ * given type. This array is used as a "stack" for the given `node.type`.
+ *
+ * @param {Object} `state` The `compiler.state` object or custom state object.
+ * @param {Object} `node`
+ * @return {undefined}
+ * @api public
  */
 
 exports.addType = function(state, node) {
@@ -395,10 +547,14 @@ exports.addType = function(state, node) {
   if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
+
   var type = node.type.replace(/\.open$/, '');
+  state.inside = state.inside || {};
+
   if (!state.inside.hasOwnProperty(type)) {
     state.inside[type] = [];
   }
+
   state.inside[type].push(node);
 };
 
@@ -422,7 +578,7 @@ exports.removeType = function(state, node) {
 };
 
 /**
- * Return true if `node.nodes` contains only open and close nodes,
+ * Returns true if `node.nodes` contains only open and close nodes,
  * or open, close and an empty text node.
  */
 
@@ -445,18 +601,19 @@ exports.isEmptyNodes = function(node, prefix) {
 };
 
 /**
- * Return true if inside the current `type`
+ * Returns true if inside the current `type`
  */
 
 exports.isInsideType = function(state, type) {
   if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
+  state.inside = state.inside || {};
   return state.inside.hasOwnProperty(type) && state.inside[type].length > 0;
 };
 
 /**
- * Return true if `node` is inside the current `type`
+ * Returns true if `node` is inside the current `type`
  */
 
 exports.isInside = function(state, node, type) {
@@ -498,7 +655,30 @@ exports.isInside = function(state, node, type) {
 };
 
 /**
+ * Get the last `n` element from the given `array`. Used for getting
+ * a node from `node.nodes.`
+ *
+ * @param {Array} `array`
+ * @param {Number} `n`
+ * @return {undefined}
+ * @api public
+ */
+
+exports.last = function(arr, n) {
+  return arr[arr.length - (n || 1)];
+};
+
+/**
  * Cast the given `val` to an array.
+ *
+ * ```js
+ * console.log(utils.arraify(''));
+ * //=> []
+ * console.log(utils.arraify('foo'));
+ * //=> ['foo']
+ * console.log(utils.arraify(['foo']));
+ * //=> ['foo']
+ * ```
  * @param {any} `val`
  * @return {Array}
  * @api public
@@ -510,7 +690,7 @@ exports.arrayify = function(val) {
 
 /**
  * Convert the given `val` to a string by joining with `,`. Useful
- * for creating a selector from a list of strings.
+ * for creating a cheerio/CSS/DOM-style selector from a list of strings.
  *
  * @param {any} `val`
  * @return {Array}
