@@ -26,13 +26,29 @@ var util = require('snapdragon-util');
 
 ## API
 
-### [.noop](index.js#L18)
+### [.isNode](index.js#L18)
 
-Emit an empty string to effectively "skip" the string for the given `node`, but still emit the position and node type.
+Returns true if the given value is a node.
 
 **Params**
 
-* **{Object}**: node
+* `node` **{Object}**
+
+**Example**
+
+```js
+var node = snapdragon.parser.node({type: 'foo'});
+console.log(utils.isNode(node)); //=> true
+console.log(utils.isNode({})); //=> false
+```
+
+### [.noop](index.js#L33)
+
+Emit an empty string for the given `node`.
+
+**Params**
+
+* `node` **{Object}**
 
 **Example**
 
@@ -41,13 +57,13 @@ Emit an empty string to effectively "skip" the string for the given `node`, but 
 snapdragon.compiler.set('bos', utils.noop);
 ```
 
-### [.emit](index.js#L38)
+### [.emit](index.js#L53)
 
-Emit an empty string to effectively "skip" the string for the given `node`, but still emit the position and node type.
+Emit `val` for the given node. Useful when you know what needs to be emitted in advance and you don't need to access the actual node.
 
 **Params**
 
-* **{Object}**: node
+* `node` **{Object}**
 
 **Example**
 
@@ -60,9 +76,9 @@ snapdragon.compiler
   .set('i.close', utils.emit('</i>'))
 ```
 
-### [.toNoop](index.js#L55)
+### [.toNoop](index.js#L71)
 
-Converts an AST node into an empty `text` node and delete `node.nodes`.
+Converts an AST node into an empty `text` node and deletes `node.nodes`.
 
 **Params**
 
@@ -72,86 +88,95 @@ Converts an AST node into an empty `text` node and delete `node.nodes`.
 
 ```js
 utils.toNoop(node);
-utils.toNoop(node, true); // convert `node.nodes` to an empty array
+// convert `node.nodes` to the given value instead of deleting it
+utils.toNoop(node, []);
 ```
 
-### [.visit](index.js#L85)
+### [.visit](index.js#L101)
 
 Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon automatically calls registered compilers, this allows you to pass a visitor function.
 
 **Params**
 
 * `node` **{Object}**
+* `options` **{Object}**: Set `options.recurse` to true call recursively call `mapVisit` on `node.nodes`.
 * `fn` **{Function}**
 * `returns` **{Object}**: returns the node
 
 **Example**
 
 ```js
-snapdragon.compiler
-  .set('i', function(node) {
-    exports.visit(node, function(node2) {
-      // do stuff with "node2"
-      return node2;
-    });
-  })
+snapdragon.compiler.set('i', function(node) {
+  utils.visit(node, function(node2) {
+    // do stuff with "node2"
+    return node2;
+  });
+});
 ```
 
-### [.mapVisit](index.js#L121)
+### [.mapVisit](index.js#L140)
 
 Map [visit](#visit) with the given `fn` over an array of AST `nodes`.
+
+**Params**
+
+* `node` **{Object}**
+* `options` **{Object}**
+* `fn` **{Function}**
+* `returns` **{Object}**: returns the node
 
 **Example**
 
 ```js
-snapdragon.compiler
-  .set('i', function(node) {
-    exports.mapVisit(node, function(node2) {
-      // do stuff with "node2"
-      return node2;
-    });
-  })
+snapdragon.compiler.set('i', function(node) {
+  utils.mapVisit(node, function(node2) {
+    // do stuff with "node2"
+    return node2;
+  });
+});
 ```
 
-### [.wrapNodes](index.js#L154)
+### [.wrapNodes](index.js#L168)
 
-Wrap the given `node` with `*.open` and `*.close` tags.
+Wraps the given `node` with `*.open` and `*.close` nodes.
 
 **Params**
 
 * `node` **{Object}**: (required)
-* `Node` **{Function}**: (required)
+* `Node` **{Function}**: (required) Node constructor function from [snapdragon-node](https://github.com/jonschlinkert/snapdragon-node).
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.addOpen](index.js#L168)
+### [.addOpen](index.js#L183)
 
 Unshift an `*.open` node onto `node.nodes`.
 
 **Params**
 
 * `node` **{Object}**
+* `Node` **{Function}**: (required) Node constructor function from [snapdragon-node](https://github.com/jonschlinkert/snapdragon-node).
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.addClose](index.js#L187)
+### [.addClose](index.js#L203)
 
 Push a `*.close` node onto `node.nodes`.
 
 **Params**
 
 * `node` **{Object}**
+* `Node` **{Function}**: (required) Node constructor function from [snapdragon-node](https://github.com/jonschlinkert/snapdragon-node).
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.pushNode](index.js#L212)
+### [.pushNode](index.js#L229)
 
-Push `node` onto `parent.nodes`.
+Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
 
 **Params**
 
+* `parent` **{Object}**
 * `node` **{Object}**
-* `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
 **Example**
@@ -161,14 +186,16 @@ var parent = new Node({type: 'foo'});
 var node = new Node({type: 'bar'});
 utils.pushNode(parent, node);
 console.log(parent.nodes[0].type) // 'bar'
+console.log(node.parent.type) // 'foo'
 ```
 
-### [.unshiftNode](index.js#L232)
+### [.unshiftNode](index.js#L251)
 
-Unshift `node` onto `parent.nodes`.
+Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
 
 **Params**
 
+* `parent` **{Object}**
 * `node` **{Object}**
 * `returns` **{undefined}**
 
@@ -179,30 +206,255 @@ var parent = new Node({type: 'foo'});
 var node = new Node({type: 'bar'});
 utils.unshiftNode(parent, node);
 console.log(parent.nodes[0].type) // 'bar'
+console.log(node.parent.type) // 'foo'
 ```
 
-### [.firstOfType](index.js#L308)
+### [.isType](index.js#L273)
 
-Return the first node from `nodes` of the given `type`
+Returns true if `node` is a valid [Node](https://github.com/jonschlinkert/snapdragon-node) and `node.type` matches the given `type`.
+
+**Params**
+
+* `node` **{Object}**
+* `type` **{String}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var node = new Node({type: 'foo'});
+console.log(utils.isType(node, 'foo')); // false
+console.log(utils.isType(node, 'bar')); // true
+```
+
+### [.hasType](index.js#L317)
+
+Returns true if the given `node` has the given `type` in `node.nodes`.
+
+**Params**
+
+* `node` **{Object}**
+* `type` **{String}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var node = new Node({
+  type: 'foo',
+  nodes: [
+    new Node({type: 'bar'}),
+    new Node({type: 'baz'})
+  ]
+});
+console.log(utils.hasType(node, 'xyz')); // false
+console.log(utils.hasType(node, 'baz')); // true
+```
+
+### [.firstOfType](index.js#L349)
+
+Returns the first node from `node.nodes` of the given `type`
 
 **Params**
 
 * `nodes` **{Array}**
 * `type` **{String}**
-* `returns` **{Object}**: Returns a node, if found
+* `returns` **{Object|undefined}**: Returns the first matching node or undefined.
 
 **Example**
 
 ```js
-snapdragon.set('div', function(node) {
- var textNode = exports.firstOfType(node.nodes, 'text');
- if (textNode) {
-   // do stuff with text node
- }
+var node = new Node({
+  type: 'foo',
+  nodes: [
+    new Node({type: 'text', val: 'abc'}),
+    new Node({type: 'text', val: 'xyz'})
+  ]
 });
+
+var textNode = utils.firstOfType(node.nodes, 'text');
+console.log(textNode.val);
+//=> 'abc'
 ```
 
-### [.arrayify](index.js#L507)
+### [.getNode](index.js#L390)
+
+Returns the node at the specified index, or the first node of the given `type` from `node.nodes`.
+
+**Params**
+
+* `nodes` **{Array}**
+* `type` **{String|Number}**: Node type or index.
+* `returns` **{Object}**: Returns a node or undefined.
+
+**Example**
+
+```js
+var node = new Node({
+  type: 'foo',
+  nodes: [
+    new Node({type: 'text', val: 'abc'}),
+    new Node({type: 'text', val: 'xyz'})
+  ]
+});
+
+var nodeOne = utils.getNode(node.nodes, 'text');
+console.log(nodeOne.val);
+//=> 'abc'
+
+var nodeTwo = utils.getNode(node.nodes, 1);
+console.log(nodeTwo.val);
+//=> 'xyz'
+```
+
+### [.isOpen](index.js#L416)
+
+Returns true if the given node is an "*.open" node.
+
+**Params**
+
+* `node` **{Object}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var brace = new Node({type: 'brace'});
+var open = new Node({type: 'brace.open'});
+var close = new Node({type: 'brace.close'});
+
+console.log(utils.isOpen(brace)); // false
+console.log(utils.isOpen(open)); // true
+console.log(utils.isOpen(close)); // false
+```
+
+### [.isClose](index.js#L441)
+
+Returns true if the given node is a "*.close" node.
+
+**Params**
+
+* `node` **{Object}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var brace = new Node({type: 'brace'});
+var open = new Node({type: 'brace.open'});
+var close = new Node({type: 'brace.close'});
+
+console.log(utils.isClose(brace)); // false
+console.log(utils.isClose(open)); // false
+console.log(utils.isClose(close)); // true
+```
+
+### [.hasOpen](index.js#L469)
+
+Returns true if `node.nodes` **has** an `.open` node
+
+**Params**
+
+* `node` **{Object}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var brace = new Node({
+  type: 'brace',
+  nodes: []
+});
+
+var open = new Node({type: 'brace.open'});
+console.log(utils.hasOpen(brace)); // false
+
+brace.addNode(open);
+console.log(utils.hasOpen(brace)); // true
+```
+
+### [.hasClose](index.js#L497)
+
+Returns true if `node.nodes` **has** a `.close` node
+
+**Params**
+
+* `node` **{Object}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var brace = new Node({
+  type: 'brace',
+  nodes: []
+});
+
+var close = new Node({type: 'brace.close'});
+console.log(utils.hasClose(brace)); // false
+
+brace.addNode(close);
+console.log(utils.hasClose(brace)); // true
+```
+
+### [.hasOpenAndClose](index.js#L529)
+
+Returns true if `node.nodes` has both `.open` and `.close` nodes
+
+**Params**
+
+* `node` **{Object}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var brace = new Node({
+  type: 'brace',
+  nodes: []
+});
+
+var open = new Node({type: 'brace.open'});
+var close = new Node({type: 'brace.close'});
+console.log(utils.hasOpen(brace)); // false
+console.log(utils.hasClose(brace)); // false
+
+brace.addNode(open);
+brace.addNode(close);
+console.log(utils.hasOpen(brace)); // true
+console.log(utils.hasClose(brace)); // true
+```
+
+### [.addType](index.js#L543)
+
+Push the given `node` onto the `state.inside` array for the
+given type. This array is used as a "stack" for the given `node.type`.
+
+**Params**
+
+* `state` **{Object}**: The `compiler.state` object or custom state object.
+* `node` **{Object}**
+* `returns` **{undefined}**
+
+### [.last](index.js#L667)
+
+Get the last `n` element from the given `array`. Used for getting
+a node from `node.nodes.`
+
+**Params**
+
+* `array` **{Array}**
+* `n` **{Number}**
+* `returns` **{undefined}**
+
+### [.arrayify](index.js#L687)
 
 Cast the given `val` to an array.
 
@@ -211,10 +463,21 @@ Cast the given `val` to an array.
 * `val` **{any}**
 * `returns` **{Array}**
 
-### [.stringify](index.js#L520)
+**Example**
+
+```js
+console.log(utils.arraify(''));
+//=> []
+console.log(utils.arraify('foo'));
+//=> ['foo']
+console.log(utils.arraify(['foo']));
+//=> ['foo']
+```
+
+### [.stringify](index.js#L700)
 
 Convert the given `val` to a string by joining with `,`. Useful
-for creating a selector from a list of strings.
+for creating a cheerio/CSS/DOM-style selector from a list of strings.
 
 **Params**
 
@@ -257,8 +520,8 @@ $ npm install && npm test
 ### License
 
 Copyright © 2017, [Jon Schlinkert](https://github.com/jonschlinkert).
-MIT
+Released under the [MIT License](LICENSE).
 
 ***
 
-_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.4.2, on February 15, 2017._
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.4.2, on February 26, 2017._
