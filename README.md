@@ -26,7 +26,7 @@ var util = require('snapdragon-util');
 
 ## API
 
-### [.isNode](index.js#L18)
+### [.isNode](index.js#L17)
 
 Returns true if the given value is a node.
 
@@ -42,7 +42,7 @@ console.log(utils.isNode(node)); //=> true
 console.log(utils.isNode({})); //=> false
 ```
 
-### [.noop](index.js#L33)
+### [.noop](index.js#L32)
 
 Emit an empty string for the given `node`.
 
@@ -57,7 +57,7 @@ Emit an empty string for the given `node`.
 snapdragon.compiler.set('bos', utils.noop);
 ```
 
-### [.emit](index.js#L53)
+### [.emit](index.js#L52)
 
 Emit `val` for the given node. Useful when you know what needs to be emitted in advance and you don't need to access the actual node.
 
@@ -76,7 +76,7 @@ snapdragon.compiler
   .set('i.close', utils.emit('</i>'))
 ```
 
-### [.toNoop](index.js#L71)
+### [.toNoop](index.js#L70)
 
 Converts an AST node into an empty `text` node and deletes `node.nodes`.
 
@@ -92,7 +92,7 @@ utils.toNoop(node);
 utils.toNoop(node, []);
 ```
 
-### [.visit](index.js#L101)
+### [.visit](index.js#L100)
 
 Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon automatically calls registered compilers, this allows you to pass a visitor function.
 
@@ -114,7 +114,7 @@ snapdragon.compiler.set('i', function(node) {
 });
 ```
 
-### [.mapVisit](index.js#L140)
+### [.mapVisit](index.js#L139)
 
 Map [visit](#visit) with the given `fn` over an array of AST `nodes`.
 
@@ -136,7 +136,7 @@ snapdragon.compiler.set('i', function(node) {
 });
 ```
 
-### [.wrapNodes](index.js#L168)
+### [.wrapNodes](index.js#L165)
 
 Wraps the given `node` with `*.open` and `*.close` nodes.
 
@@ -147,7 +147,7 @@ Wraps the given `node` with `*.open` and `*.close` nodes.
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.addOpen](index.js#L183)
+### [.addOpen](index.js#L180)
 
 Unshift an `*.open` node onto `node.nodes`.
 
@@ -158,7 +158,7 @@ Unshift an `*.open` node onto `node.nodes`.
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.addClose](index.js#L203)
+### [.addClose](index.js#L200)
 
 Push a `*.close` node onto `node.nodes`.
 
@@ -169,7 +169,7 @@ Push a `*.close` node onto `node.nodes`.
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{undefined}**
 
-### [.pushNode](index.js#L229)
+### [.pushNode](index.js#L226)
 
 Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
 
@@ -189,7 +189,7 @@ console.log(parent.nodes[0].type) // 'bar'
 console.log(node.parent.type) // 'foo'
 ```
 
-### [.unshiftNode](index.js#L251)
+### [.unshiftNode](index.js#L248)
 
 Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
 
@@ -209,7 +209,7 @@ console.log(parent.nodes[0].type) // 'bar'
 console.log(node.parent.type) // 'foo'
 ```
 
-### [.isType](index.js#L273)
+### [.isType](index.js#L270)
 
 Returns true if `node` is a valid [Node](https://github.com/jonschlinkert/snapdragon-node) and `node.type` matches the given `type`.
 
@@ -228,7 +228,7 @@ console.log(utils.isType(node, 'foo')); // false
 console.log(utils.isType(node, 'bar')); // true
 ```
 
-### [.hasType](index.js#L317)
+### [.hasType](index.js#L314)
 
 Returns true if the given `node` has the given `type` in `node.nodes`.
 
@@ -253,7 +253,7 @@ console.log(utils.hasType(node, 'xyz')); // false
 console.log(utils.hasType(node, 'baz')); // true
 ```
 
-### [.firstOfType](index.js#L349)
+### [.firstOfType](index.js#L346)
 
 Returns the first node from `node.nodes` of the given `type`
 
@@ -279,7 +279,7 @@ console.log(textNode.val);
 //=> 'abc'
 ```
 
-### [.getNode](index.js#L390)
+### [.getNode](index.js#L387)
 
 Returns the node at the specified index, or the first node of the given `type` from `node.nodes`.
 
@@ -309,7 +309,7 @@ console.log(nodeTwo.val);
 //=> 'xyz'
 ```
 
-### [.isOpen](index.js#L416)
+### [.isOpen](index.js#L413)
 
 Returns true if the given node is an "*.open" node.
 
@@ -331,7 +331,7 @@ console.log(utils.isOpen(open)); // true
 console.log(utils.isOpen(close)); // false
 ```
 
-### [.isClose](index.js#L441)
+### [.isClose](index.js#L438)
 
 Returns true if the given node is a "*.close" node.
 
@@ -353,7 +353,7 @@ console.log(utils.isClose(open)); // false
 console.log(utils.isClose(close)); // true
 ```
 
-### [.hasOpen](index.js#L469)
+### [.hasOpen](index.js#L466)
 
 Returns true if `node.nodes` **has** an `.open` node
 
@@ -378,7 +378,7 @@ brace.addNode(open);
 console.log(utils.hasOpen(brace)); // true
 ```
 
-### [.hasClose](index.js#L497)
+### [.hasClose](index.js#L494)
 
 Returns true if `node.nodes` **has** a `.close` node
 
@@ -403,7 +403,7 @@ brace.addNode(close);
 console.log(utils.hasClose(brace)); // true
 ```
 
-### [.hasOpenAndClose](index.js#L529)
+### [.hasOpenAndClose](index.js#L526)
 
 Returns true if `node.nodes` has both `.open` and `.close` nodes
 
@@ -432,7 +432,7 @@ console.log(utils.hasOpen(brace)); // true
 console.log(utils.hasClose(brace)); // true
 ```
 
-### [.addType](index.js#L543)
+### [.addType](index.js#L540)
 
 Push the given `node` onto the `state.inside` array for the
 given type. This array is used as a "stack" for the given `node.type`.
@@ -443,7 +443,7 @@ given type. This array is used as a "stack" for the given `node.type`.
 * `node` **{Object}**
 * `returns` **{undefined}**
 
-### [.last](index.js#L667)
+### [.last](index.js#L664)
 
 Get the last `n` element from the given `array`. Used for getting
 a node from `node.nodes.`
@@ -454,7 +454,7 @@ a node from `node.nodes.`
 * `n` **{Number}**
 * `returns` **{undefined}**
 
-### [.arrayify](index.js#L687)
+### [.arrayify](index.js#L684)
 
 Cast the given `val` to an array.
 
@@ -474,7 +474,7 @@ console.log(utils.arraify(['foo']));
 //=> ['foo']
 ```
 
-### [.stringify](index.js#L700)
+### [.stringify](index.js#L697)
 
 Convert the given `val` to a string by joining with `,`. Useful
 for creating a cheerio/CSS/DOM-style selector from a list of strings.
@@ -524,4 +524,4 @@ Released under the [MIT License](LICENSE).
 
 ***
 
-_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.4.2, on February 26, 2017._
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.4.3, on March 04, 2017._
