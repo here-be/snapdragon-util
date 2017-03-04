@@ -1,6 +1,5 @@
 'use strict';
 
-var define = require('define-property');
 var typeOf = require('kind-of');
 
 /**
@@ -148,9 +147,7 @@ exports.mapVisit = function(node, options, fn) {
   }
 
   for (var i = 0; i < node.nodes.length; i++) {
-    var childNode = node.nodes[i];
-    define(childNode, 'parent', node);
-    exports.visit(childNode, options, fn) || childNode;
+    exports.visit(node.nodes[i], options, fn);
   }
   return node;
 };
