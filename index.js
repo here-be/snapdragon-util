@@ -35,6 +35,20 @@ utils.noop = function(node) {
 };
 
 /**
+ * Emit `node.val` as-is.
+ *
+ * ```js
+ * snapdragon.compiler.set('text', utils.identity);
+ * ```
+ * @param {Object} `node`
+ * @api public
+ */
+
+utils.identity = function(node) {
+  this.emit(node.val, node);
+};
+
+/**
  * Emit `val` for the given node. Useful when you know what needs to be
  * emitted in advance and you don't need to access the actual node.
  *
