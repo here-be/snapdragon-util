@@ -1,6 +1,7 @@
 'use strict';
 
 var typeOf = require('kind-of');
+var utils = module.exports;
 
 /**
  * Returns true if the given value is a node.
@@ -14,7 +15,7 @@ var typeOf = require('kind-of');
  * @api public
  */
 
-exports.isNode = function(node) {
+utils.isNode = function(node) {
   return typeOf(node) === 'object' && node.isNode;
 };
 
@@ -29,7 +30,7 @@ exports.isNode = function(node) {
  * @api public
  */
 
-exports.noop = function(node) {
+utils.noop = function(node) {
   this.emit('', node);
 };
 
@@ -49,7 +50,7 @@ exports.noop = function(node) {
  * @api public
  */
 
-exports.emit = function(val) {
+utils.emit = function(val) {
   return function(node) {
     this.emit(val, node);
   };
@@ -67,7 +68,7 @@ exports.emit = function(val) {
  * @api public
  */
 
-exports.toNoop = function(node, nodes) {
+utils.toNoop = function(node, nodes) {
   if (nodes) {
     node.nodes = nodes;
   } else {
@@ -97,7 +98,7 @@ exports.toNoop = function(node, nodes) {
  * @api public
  */
 
-exports.visit = function(node, options, fn) {
+utils.visit = function(node, options, fn) {
   if (typeof options === 'function') {
     fn = options;
     options = {};
@@ -113,7 +114,7 @@ exports.visit = function(node, options, fn) {
   node = fn(node) || node;
   var nodes = node.nodes || node.children;
   if (options && options.recurse && Array.isArray(nodes)) {
-    exports.mapVisit(node, options, fn);
+    utils.mapVisit(node, options, fn);
   }
   return node;
 };
@@ -136,7 +137,7 @@ exports.visit = function(node, options, fn) {
  * @api public
  */
 
-exports.mapVisit = function(node, options, fn) {
+utils.mapVisit = function(node, options, fn) {
   if (typeof options === 'function') {
     fn = options;
     options = {};
@@ -147,7 +148,7 @@ exports.mapVisit = function(node, options, fn) {
   }
 
   for (var i = 0; i < node.nodes.length; i++) {
-    exports.visit(node.nodes[i], options, fn);
+    utils.visit(node.nodes[i], options, fn);
   }
   return node;
 };
@@ -162,9 +163,9 @@ exports.mapVisit = function(node, options, fn) {
  * @api public
  */
 
-exports.wrapNodes = function(node, Node, filter) {
-  exports.addOpen(node, Node, filter);
-  exports.addClose(node, Node, filter);
+utils.wrapNodes = function(node, Node, filter) {
+  utils.addOpen(node, Node, filter);
+  utils.addClose(node, Node, filter);
 };
 
 /**
@@ -177,13 +178,13 @@ exports.wrapNodes = function(node, Node, filter) {
  * @api public
  */
 
-exports.addOpen = function(node, Node, filter) {
+utils.addOpen = function(node, Node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
   var open = new Node({ type: node.type + '.open', val: ''});
   if (node.isNode && node.pushNode) {
     node.unshiftNode(open);
   } else {
-    exports.unshiftNode(node, open);
+    utils.unshiftNode(node, open);
   }
 };
 
@@ -197,13 +198,13 @@ exports.addOpen = function(node, Node, filter) {
  * @api public
  */
 
-exports.addClose = function(node, Node, filter) {
+utils.addClose = function(node, Node, filter) {
   if (typeof filter === 'function' && !filter(node)) return;
   var close = new Node({ type: node.type + '.close', val: ''});
   if (node.isNode && node.pushNode) {
     node.pushNode(close);
   } else {
-    exports.pushNode(node, close);
+    utils.pushNode(node, close);
   }
 };
 
@@ -223,7 +224,7 @@ exports.addClose = function(node, Node, filter) {
  * @api public
  */
 
-exports.pushNode = function(parent, node) {
+utils.pushNode = function(parent, node) {
   parent.nodes = parent.nodes || [];
   node.define('parent', parent);
   parent.nodes.push(node);
@@ -245,7 +246,7 @@ exports.pushNode = function(parent, node) {
  * @api public
  */
 
-exports.unshiftNode = function(parent, node) {
+utils.unshiftNode = function(parent, node) {
   parent.nodes = parent.nodes || [];
   node.define('parent', parent);
   parent.nodes.unshift(node);
@@ -267,7 +268,7 @@ exports.unshiftNode = function(parent, node) {
  * @api public
  */
 
-exports.isType = function(node, type) {
+utils.isType = function(node, type) {
   if (typeOf(node) !== 'object' || !node.type) {
     throw new TypeError('expected node to be an object');
   }
@@ -275,7 +276,7 @@ exports.isType = function(node, type) {
     case 'array':
       var types = type.slice();
       for (var i = 0; i < types.length; i++) {
-        if (exports.isType(node, types[i])) {
+        if (utils.isType(node, types[i])) {
           return true;
         }
       }
@@ -311,10 +312,10 @@ exports.isType = function(node, type) {
  * @api public
  */
 
-exports.hasType = function(node, type) {
+utils.hasType = function(node, type) {
   if (!Array.isArray(node.nodes)) return false;
   for (var i = 0; i < node.nodes.length; i++) {
-    if (exports.isType(node.nodes[i], type)) {
+    if (utils.isType(node.nodes[i], type)) {
       return true;
     }
   }
@@ -343,14 +344,14 @@ exports.hasType = function(node, type) {
  * @api public
  */
 
-exports.firstOfType = function(nodes, type) {
+utils.firstOfType = function(nodes, type) {
   if (!Array.isArray(nodes)) {
     throw new TypeError('expected nodes to be an array');
   }
 
   for (var i = 0; i < nodes.length; i++) {
     var node = nodes[i];
-    if (exports.isType(node, type)) {
+    if (utils.isType(node, type)) {
       return node;
     }
   }
@@ -384,12 +385,12 @@ exports.firstOfType = function(nodes, type) {
  * @api public
  */
 
-exports.getNode = function(nodes, type) {
+utils.getNode = function(nodes, type) {
   if (!Array.isArray(nodes)) return;
   if (typeof type === 'number') {
     return nodes[type];
   }
-  return exports.firstOfType(nodes, type);
+  return utils.firstOfType(nodes, type);
 };
 
 /**
@@ -410,7 +411,7 @@ exports.getNode = function(nodes, type) {
  * @api public
  */
 
-exports.isOpen = function(node) {
+utils.isOpen = function(node) {
   if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
@@ -435,7 +436,7 @@ exports.isOpen = function(node) {
  * @api public
  */
 
-exports.isClose = function(node) {
+utils.isClose = function(node) {
   if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
@@ -455,7 +456,7 @@ exports.isClose = function(node) {
  * var open = new Node({type: 'brace.open'});
  * console.log(utils.hasOpen(brace)); // false
  *
- * brace.addNode(open);
+ * brace.pushNode(open);
  * console.log(utils.hasOpen(brace)); // true
  * ```
  * @param {Object} `node`
@@ -463,7 +464,7 @@ exports.isClose = function(node) {
  * @api public
  */
 
-exports.hasOpen = function(node) {
+utils.hasOpen = function(node) {
   if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
@@ -483,7 +484,7 @@ exports.hasOpen = function(node) {
  * var close = new Node({type: 'brace.close'});
  * console.log(utils.hasClose(brace)); // false
  *
- * brace.addNode(close);
+ * brace.pushNode(close);
  * console.log(utils.hasClose(brace)); // true
  * ```
  * @param {Object} `node`
@@ -491,11 +492,11 @@ exports.hasOpen = function(node) {
  * @api public
  */
 
-exports.hasClose = function(node) {
+utils.hasClose = function(node) {
   if (typeOf(node) !== 'object' || typeof node.type !== 'string') {
     throw new TypeError('expected node to be an object');
   }
-  return node.nodes && exports.last(node.nodes).type === (node.type + '.close');
+  return node.nodes && utils.last(node.nodes).type === (node.type + '.close');
 };
 
 /**
@@ -513,8 +514,8 @@ exports.hasClose = function(node) {
  * console.log(utils.hasOpen(brace)); // false
  * console.log(utils.hasClose(brace)); // false
  *
- * brace.addNode(open);
- * brace.addNode(close);
+ * brace.pushNode(open);
+ * brace.pushNode(close);
  * console.log(utils.hasOpen(brace)); // true
  * console.log(utils.hasClose(brace)); // true
  * ```
@@ -523,8 +524,8 @@ exports.hasClose = function(node) {
  * @api public
  */
 
-exports.hasOpenAndClose = function(node) {
-  return exports.hasOpen(node) && exports.hasClose(node);
+utils.hasOpenAndClose = function(node) {
+  return utils.hasOpen(node) && utils.hasClose(node);
 };
 
 /**
@@ -537,7 +538,7 @@ exports.hasOpenAndClose = function(node) {
  * @api public
  */
 
-exports.addType = function(state, node) {
+utils.addType = function(state, node) {
   if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
@@ -559,7 +560,7 @@ exports.addType = function(state, node) {
  * Remove the given `node` from the `state.inside` array for that type.
  */
 
-exports.removeType = function(state, node) {
+utils.removeType = function(state, node) {
   if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
@@ -579,7 +580,7 @@ exports.removeType = function(state, node) {
  * or open, close and an empty text node.
  */
 
-exports.isEmptyNodes = function(node, prefix) {
+utils.isEmptyNodes = function(node, prefix) {
   if (typeOf(node) !== 'object') {
     throw new TypeError('expected node to be an object');
   }
@@ -592,7 +593,7 @@ exports.isEmptyNodes = function(node, prefix) {
     return true;
   }
   if (len === 3) {
-    return exports.isType(first, 'text') && !first.val.trim();
+    return utils.isType(first, 'text') && !first.val.trim();
   }
   return false;
 };
@@ -601,7 +602,7 @@ exports.isEmptyNodes = function(node, prefix) {
  * Returns true if inside the current `type`
  */
 
-exports.isInsideType = function(state, type) {
+utils.isInsideType = function(state, type) {
   if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
@@ -613,7 +614,7 @@ exports.isInsideType = function(state, type) {
  * Returns true if `node` is inside the current `type`
  */
 
-exports.isInside = function(state, node, type) {
+utils.isInside = function(state, node, type) {
   if (typeOf(state) !== 'object') {
     throw new TypeError('expected state to be an object');
   }
@@ -623,7 +624,7 @@ exports.isInside = function(state, node, type) {
 
   if (Array.isArray(type)) {
     for (var i = 0; i < type.length; i++) {
-      if (exports.isInside(state, node, type[i])) {
+      if (utils.isInside(state, node, type[i])) {
         return true;
       }
     }
@@ -632,7 +633,7 @@ exports.isInside = function(state, node, type) {
 
   var parent = node.parent || {};
   if (typeof type === 'string') {
-    return exports.isInsideType(state, type) || parent.type === type;
+    return utils.isInsideType(state, type) || parent.type === type;
   }
 
   if (typeOf(type) === 'regexp') {
@@ -661,7 +662,7 @@ exports.isInside = function(state, node, type) {
  * @api public
  */
 
-exports.last = function(arr, n) {
+utils.last = function(arr, n) {
   return arr[arr.length - (n || 1)];
 };
 
@@ -681,7 +682,7 @@ exports.last = function(arr, n) {
  * @api public
  */
 
-exports.arrayify = function(val) {
+utils.arrayify = function(val) {
   return val ? (Array.isArray(val) ? val : [val]) : [];
 };
 
@@ -694,6 +695,6 @@ exports.arrayify = function(val) {
  * @api public
  */
 
-exports.stringify = function(val) {
-  return exports.arrayify(val).join(',');
+utils.stringify = function(val) {
+  return utils.arrayify(val).join(',');
 };
