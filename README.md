@@ -9,7 +9,7 @@
 - [Usage](#usage)
 - [API](#api)
 - [Release history](#release-history)
-  * [[2.0.0] - 2017-05-01](#200---2017-05-01)
+  * [[3.0.0] - 2017-05-01](#300---2017-05-01)
   * [[0.1.0]](#010)
 - [About](#about)
 
@@ -744,7 +744,7 @@ Custom labels used in this changelog:
 * `dependencies`: bumps dependencies
 * `housekeeping`: code re-organization, minor edits, or other changes that don't fit in one of the other categories.
 
-### [2.0.0] - 2017-05-01
+### [3.0.0] - 2017-05-01
 
 **Changed**
 
