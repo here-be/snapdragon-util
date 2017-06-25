@@ -19,7 +19,7 @@ var utils = module.exports;
  */
 
 utils.isNode = function(node) {
-  return typeOf(node) === 'object' && node.isNode;
+  return typeOf(node) === 'object' && node.isNode === true;
 };
 
 /**
