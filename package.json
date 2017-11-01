@@ -20,7 +20,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "kind-of": "^3.2.0"
+    "kind-of": "^6.0.0"
   },
   "devDependencies": {
     "define-property": "^1.0.0",
