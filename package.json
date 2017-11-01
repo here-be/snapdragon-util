@@ -20,7 +20,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "kind-of": "^3.2.0"
+    "kind-of": "^6.0.0"
   },
   "devDependencies": {
     "define-property": "^1.0.0",
@@ -32,7 +32,7 @@
     "isobject": "^3.0.0",
     "mocha": "^3.3.0",
     "snapdragon": "^0.11.0",
-    "snapdragon-node": "^1.0.6"
+    "snapdragon-node": "^2.1.1"
   },
   "keywords": [
     "capture",
