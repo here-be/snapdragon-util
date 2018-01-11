@@ -38,8 +38,28 @@ utils.noop = function(node) {
 };
 
 /**
- * Appdend `node.val` to `compiler.output`, exactly as it was created
- * by the parser.
+ * Returns `node.value` or `node.val`.
+ *
+ * ```js
+ * const star = new Node({type: 'star', value: '*'});
+ * const slash = new Node({type: 'slash', val: '/'});
+ * console.log(utils.value(star)) //=> '*'
+ * console.log(utils.value(slash)) //=> '/'
+ * ```
+ * @param {Object} `node` Instance of [snapdragon-node][]
+ * @returns {String} returns
+ * @api public
+ */
+
+utils.value = function(node) {
+  if (typeof node.value === 'string') {
+    return node.value;
+  }
+  return node.val;
+};
+
+/**
+ * Append `node.value` to `compiler.output`.
  *
  * ```js
  * snapdragon.compiler.set('text', utils.identity);
@@ -50,14 +70,14 @@ utils.noop = function(node) {
  */
 
 utils.identity = function(node) {
-  append(this, node.val, node);
+  append(this, utils.value(node), node);
 };
 
 /**
- * Previously named `.emit`, this method appends the given `val`
+ * Previously named `.emit`, this method appends the given `value`
  * to `compiler.output` for the given node. Useful when you know
  * what value should be appended advance, regardless of the actual
- * value of `node.val`.
+ * value of `node.value`.
  *
  * ```js
  * snapdragon.compiler
@@ -72,9 +92,9 @@ utils.identity = function(node) {
  * @api public
  */
 
-utils.append = function(val) {
+utils.append = function(value) {
   return function(node) {
-    append(this, val, node);
+    append(this, value, node);
   };
 };
 
@@ -101,7 +121,7 @@ utils.toNoop = function(node, nodes) {
   } else {
     delete node.nodes;
     node.type = 'text';
-    node.val = '';
+    node.value = '';
   }
 };
 
@@ -125,8 +145,8 @@ utils.toNoop = function(node, nodes) {
  */
 
 utils.visit = function(node, fn) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
   assert(isFunction(fn), 'expected a visitor function');
+  expect(node, 'node');
   fn(node);
   return node.nodes ? utils.mapVisit(node, fn) : node;
 };
@@ -152,9 +172,9 @@ utils.visit = function(node, fn) {
  */
 
 utils.mapVisit = function(node, fn) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
-  assert(isArray(node.nodes), 'expected node.nodes to be an array');
   assert(isFunction(fn), 'expected a visitor function');
+  expect(node, 'node');
+  assert(isArray(node.nodes), 'expected node.nodes to be an array');
 
   for (var i = 0; i < node.nodes.length; i++) {
     utils.visit(node.nodes[i], fn);
@@ -173,7 +193,7 @@ utils.mapVisit = function(node, fn) {
  *     var parent = new Node({type: 'brace'});
  *     utils.addOpen(parent, Node);
  *     console.log(parent.nodes[0]):
- *     // { type: 'brace.open', val: '' };
+ *     // { type: 'brace.open', value: '' };
  *
  *     // push the parent "brace" node onto the stack
  *     this.push(parent);
@@ -190,17 +210,17 @@ utils.mapVisit = function(node, fn) {
  * @api public
  */
 
-utils.addOpen = function(node, Node, val, filter) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
+utils.addOpen = function(node, Node, value, filter) {
+  expect(node, 'node');
   assert(isFunction(Node), 'expected Node to be a constructor function');
 
-  if (typeof val === 'function') {
-    filter = val;
-    val = '';
+  if (typeof value === 'function') {
+    filter = value;
+    value = '';
   }
 
   if (typeof filter === 'function' && !filter(node)) return;
-  var open = new Node({ type: node.type + '.open', val: val});
+  var open = new Node({ type: node.type + '.open', value: value});
   var unshift = node.unshift || node.unshiftNode;
   if (typeof unshift === 'function') {
     unshift.call(node, open);
@@ -225,7 +245,7 @@ utils.addOpen = function(node, Node, val, filter) {
  *
  *     utils.addClose(parent, Node);
  *     console.log(parent.nodes[parent.nodes.length - 1]):
- *     // { type: 'brace.close', val: '' };
+ *     // { type: 'brace.close', value: '' };
  *
  *     // no need to return a node, since the parent
  *     // was already added to the AST
@@ -240,17 +260,17 @@ utils.addOpen = function(node, Node, val, filter) {
  * @api public
  */
 
-utils.addClose = function(node, Node, val, filter) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
+utils.addClose = function(node, Node, value, filter) {
   assert(isFunction(Node), 'expected Node to be a constructor function');
+  expect(node, 'node', Node);
 
-  if (typeof val === 'function') {
-    filter = val;
-    val = '';
+  if (typeof value === 'function') {
+    filter = value;
+    value = '';
   }
 
   if (typeof filter === 'function' && !filter(node)) return;
-  var close = new Node({ type: node.type + '.close', val: val});
+  var close = new Node({ type: node.type + '.close', value: value});
   var push = node.push || node.pushNode;
   if (typeof push === 'function') {
     push.call(node, close);
@@ -297,7 +317,11 @@ utils.wrapNodes = function(node, Node, filter) {
 
 utils.pushNode = function(parent, node) {
   assert(utils.isNode(parent), 'expected parent node to be an instance of Node');
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
+  if (!node) return;
+
+  if (typeof parent.push === 'function') {
+    return parent.push(node);
+  }
 
   node.define('parent', parent);
   parent.nodes = parent.nodes || [];
@@ -323,7 +347,11 @@ utils.pushNode = function(parent, node) {
 
 utils.unshiftNode = function(parent, node) {
   assert(utils.isNode(parent), 'expected parent node to be an instance of Node');
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
+  if (!node) return;
+
+  if (typeof parent.unshift === 'function') {
+    return parent.unshift(node);
+  }
 
   node.define('parent', parent);
   parent.nodes = parent.nodes || [];
@@ -406,12 +434,9 @@ utils.shiftNode = function(node) {
  */
 
 utils.removeNode = function(parent, node) {
-  assert(utils.isNode(parent), 'expected parent.node to be an instance of Node');
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
-
-  if (!parent.nodes) {
-    return null;
-  }
+  assert(utils.isNode(parent), 'expected parent to be an instance of Node');
+  if (!parent.nodes) return;
+  if (!node) return;
 
   if (typeof parent.remove === 'function') {
     return parent.remove(node);
@@ -440,20 +465,19 @@ utils.removeNode = function(parent, node) {
  */
 
 utils.isType = function(node, type) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
+  if (!utils.isNode(node)) return false;
   switch (typeOf(type)) {
-    case 'array':
-      var types = type.slice();
-      for (var i = 0; i < types.length; i++) {
-        if (utils.isType(node, types[i])) {
-          return true;
-        }
-      }
-      return false;
     case 'string':
       return node.type === type;
     case 'regexp':
       return type.test(node.type);
+    case 'array':
+      for (const key of type.slice()) {
+        if (utils.isType(node, key)) {
+          return true;
+        }
+      }
+      return false;
     default: {
       throw new TypeError('expected "type" to be an array, string or regexp');
     }
@@ -483,10 +507,10 @@ utils.isType = function(node, type) {
  */
 
 utils.hasType = function(node, type) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
+  if (!utils.isNode(node)) return false;
   if (!Array.isArray(node.nodes)) return false;
-  for (var i = 0; i < node.nodes.length; i++) {
-    if (utils.isType(node.nodes[i], type)) {
+  for (const child of node.nodes) {
+    if (utils.isType(child, type)) {
       return true;
     }
   }
@@ -500,13 +524,13 @@ utils.hasType = function(node, type) {
  * var node = new Node({
  *   type: 'foo',
  *   nodes: [
- *     new Node({type: 'text', val: 'abc'}),
- *     new Node({type: 'text', val: 'xyz'})
+ *     new Node({type: 'text', value: 'abc'}),
+ *     new Node({type: 'text', value: 'xyz'})
  *   ]
  * });
  *
  * var textNode = utils.firstOfType(node.nodes, 'text');
- * console.log(textNode.val);
+ * console.log(textNode.value);
  * //=> 'abc'
  * ```
  * @param {Array} `nodes`
@@ -516,8 +540,7 @@ utils.hasType = function(node, type) {
  */
 
 utils.firstOfType = function(nodes, type) {
-  for (var i = 0; i < nodes.length; i++) {
-    var node = nodes[i];
+  for (const node of nodes) {
     if (utils.isType(node, type)) {
       return node;
     }
@@ -532,17 +555,17 @@ utils.firstOfType = function(nodes, type) {
  * var node = new Node({
  *   type: 'foo',
  *   nodes: [
- *     new Node({type: 'text', val: 'abc'}),
- *     new Node({type: 'text', val: 'xyz'})
+ *     new Node({type: 'text', value: 'abc'}),
+ *     new Node({type: 'text', value: 'xyz'})
  *   ]
  * });
  *
  * var nodeOne = utils.findNode(node.nodes, 'text');
- * console.log(nodeOne.val);
+ * console.log(nodeOne.value);
  * //=> 'abc'
  *
  * var nodeTwo = utils.findNode(node.nodes, 1);
- * console.log(nodeTwo.val);
+ * console.log(nodeTwo.value);
  * //=> 'xyz'
  * ```
  *
@@ -553,12 +576,8 @@ utils.firstOfType = function(nodes, type) {
  */
 
 utils.findNode = function(nodes, type) {
-  if (!Array.isArray(nodes)) {
-    return null;
-  }
-  if (typeof type === 'number') {
-    return nodes[type];
-  }
+  if (!Array.isArray(nodes)) return null;
+  if (typeof type === 'number') return nodes[type];
   return utils.firstOfType(nodes, type);
 };
 
@@ -581,8 +600,14 @@ utils.findNode = function(nodes, type) {
  */
 
 utils.isOpen = function(node) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
-  return node.type.slice(-5) === '.open';
+  if (!node) return false;
+  if (node.parent && typeof node.parent.isOpen === 'function') {
+    return node.parent.isOpen(node);
+  }
+  if (node && typeof node.isOpen === 'function') {
+    return node.isOpen(node);
+  }
+  return node.type ? node.type.slice(-5) === '.open' : false;
 };
 
 /**
@@ -604,8 +629,74 @@ utils.isOpen = function(node) {
  */
 
 utils.isClose = function(node) {
-  assert(utils.isNode(node), 'expected node to be an instance of Node');
-  return node.type.slice(-6) === '.close';
+  if (!node) return false;
+  if (node.parent && typeof node.parent.isClose === 'function') {
+    return node.parent.isClose(node);
+  }
+  if (node && typeof node.isClose === 'function') {
+    return node.isClose(node);
+  }
+  return node.type ? node.type.slice(-6) === '.close' : false;
+};
+
+/**
+ * Returns true if the given node is an "*.open" node.
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * var brace = new Node({type: 'brace'});
+ * var open = new Node({type: 'brace.open', value: '{'});
+ * var inner = new Node({type: 'text', value: 'a,b,c'});
+ * var close = new Node({type: 'brace.close', value: '}'});
+ * brace.push(open);
+ * brace.push(inner);
+ * brace.push(close);
+ *
+ * console.log(utils.isBlock(brace)); // true
+ * ```
+ * @param {Object} `node` Instance of [snapdragon-node][]
+ * @return {Boolean}
+ * @api public
+ */
+
+utils.isBlock = function(node) {
+  if (!node || !utils.isNode(node)) return false;
+  if (!Array.isArray(node.nodes)) {
+    return false;
+  }
+  if (node.parent && typeof node.parent.isBlock === 'function') {
+    return node.parent.isBlock(node);
+  }
+  if (typeof node.isBlock === 'function') {
+    return node.isBlock(node);
+  }
+  return utils.hasOpenAndClose(node);
+};
+
+/**
+ * Returns true if `parent.nodes` has the given `node`.
+ *
+ * ```js
+ * const foo = new Node({type: 'foo'});
+ * const bar = new Node({type: 'bar'});
+ * cosole.log(util.hasNode(foo, bar)); // false
+ * foo.push(bar);
+ * cosole.log(util.hasNode(foo, bar)); // true
+ * ```
+ * @param {String} `type`
+ * @return {Boolean}
+ * @api public
+ */
+
+utils.hasNode = function(node, child) {
+  if (!utils.isNode(node)) return false;
+  if (typeof node.has === 'function') {
+    return node.has(child);
+  }
+  if (node.nodes) {
+    return node.nodes.indexOf(child) !== -1;
+  }
+  return false;
 };
 
 /**
@@ -632,10 +723,11 @@ utils.isClose = function(node) {
 utils.hasOpen = function(node) {
   assert(utils.isNode(node), 'expected node to be an instance of Node');
   var first = node.first || node.nodes ? node.nodes[0] : null;
-  if (utils.isNode(first)) {
-    return first.type === node.type + '.open';
+  if (!utils.isNode(first)) return false;
+  if (node.isOpen === 'function') {
+    return node.isOpen(first);
   }
-  return false;
+  return first.type === node.type + '.open';
 };
 
 /**
@@ -662,10 +754,11 @@ utils.hasOpen = function(node) {
 utils.hasClose = function(node) {
   assert(utils.isNode(node), 'expected node to be an instance of Node');
   var last = node.last || node.nodes ? node.nodes[node.nodes.length - 1] : null;
-  if (utils.isNode(last)) {
-    return last.type === node.type + '.close';
+  if (!utils.isNode(last)) return false;
+  if (typeof node.isClose === 'function') {
+    return node.isClose(last);
   }
-  return false;
+  return last.type === node.type + '.close';
 };
 
 /**
@@ -769,13 +862,13 @@ utils.removeType = function(state, node) {
 };
 
 /**
- * Returns true if `node.val` is an empty string, or `node.nodes` does
+ * Returns true if `node.value` is an empty string, or `node.nodes` does
  * not contain any non-empty text nodes.
  *
  * ```js
  * var node = new Node({type: 'text'});
  * utils.isEmpty(node); //=> true
- * node.val = 'foo';
+ * node.value = 'foo';
  * utils.isEmpty(node); //=> false
  * ```
  * @param {Object} `node` Instance of [snapdragon-node][]
@@ -788,20 +881,17 @@ utils.isEmpty = function(node, fn) {
   assert(utils.isNode(node), 'expected node to be an instance of Node');
 
   if (!Array.isArray(node.nodes)) {
-    if (node.type !== 'text') {
-      return true;
-    }
     if (typeof fn === 'function') {
-      return fn(node, node.parent);
+      return fn(node);
     }
-    return !utils.trim(node.val);
+    return !utils.value(node);
   }
 
-  for (var i = 0; i < node.nodes.length; i++) {
-    var child = node.nodes[i];
-    if (utils.isOpen(child) || utils.isClose(child)) {
-      continue;
-    }
+  if (node.nodes.length === 0) {
+    return true;
+  }
+
+  for (const child of node.nodes) {
     if (!utils.isEmpty(child, fn)) {
       return false;
     }
@@ -891,9 +981,9 @@ utils.isInside = function(state, node, type) {
     var idx = -1;
     while (++idx < len) {
       var key = keys[idx];
-      var val = state.inside[key];
+      var value = state.inside[key];
 
-      if (Array.isArray(val) && val.length !== 0 && type.test(key)) {
+      if (Array.isArray(value) && value.length !== 0 && type.test(key)) {
         return true;
       }
     }
@@ -912,11 +1002,15 @@ utils.isInside = function(state, node, type) {
  */
 
 utils.last = function(arr, n) {
-  return arr[arr.length - (n || 1)];
+  return Array.isArray(arr) ? arr[arr.length - (n || 1)] : null;
+};
+
+utils.lastNode = function(node) {
+  return Array.isArray(node.nodes) ? utils.last(node.nodes) : null;
 };
 
 /**
- * Cast the given `val` to an array.
+ * Cast the given `value` to an array.
  *
  * ```js
  * console.log(utils.arrayify(''));
@@ -926,32 +1020,32 @@ utils.last = function(arr, n) {
  * console.log(utils.arrayify(['foo']));
  * //=> ['foo']
  * ```
- * @param {any} `val`
+ * @param {any} `value`
  * @return {Array}
  * @api public
  */
 
-utils.arrayify = function(val) {
-  if (typeof val === 'string' && val !== '') {
-    return [val];
+utils.arrayify = function(value) {
+  if (typeof value === 'string' && value !== '') {
+    return [value];
   }
-  if (!Array.isArray(val)) {
+  if (!Array.isArray(value)) {
     return [];
   }
-  return val;
+  return value;
 };
 
 /**
- * Convert the given `val` to a string by joining with `,`. Useful
+ * Convert the given `value` to a string by joining with `,`. Useful
  * for creating a cheerio/CSS/DOM-style selector from a list of strings.
  *
- * @param {any} `val`
+ * @param {any} `value`
  * @return {Array}
  * @api public
  */
 
-utils.stringify = function(val) {
-  return utils.arrayify(val).join(',');
+utils.stringify = function(value) {
+  return utils.arrayify(value).join(',');
 };
 
 /**
@@ -968,52 +1062,56 @@ utils.trim = function(str) {
 };
 
 /**
- * Return true if val is an object
+ * Return true if value is an object
  */
 
-function isObject(val) {
-  return typeOf(val) === 'object';
+function isObject(value) {
+  return typeOf(value) === 'object';
 }
 
 /**
- * Return true if val is a string
+ * Return true if value is a string
  */
 
-function isString(val) {
-  return typeof val === 'string';
+function isString(value) {
+  return typeof value === 'string';
 }
 
 /**
- * Return true if val is a function
+ * Return true if value is a function
  */
 
-function isFunction(val) {
-  return typeof val === 'function';
+function isFunction(value) {
+  return typeof value === 'function';
 }
 
 /**
- * Return true if val is an array
+ * Return true if value is an array
  */
 
-function isArray(val) {
-  return Array.isArray(val);
+function isArray(value) {
+  return Array.isArray(value);
 }
 
 /**
  * Shim to ensure the `.append` methods work with any version of snapdragon
  */
 
-function append(compiler, val, node) {
+function append(compiler, value, node) {
   if (typeof compiler.append !== 'function') {
-    return compiler.emit(val, node);
+    return compiler.emit(value, node);
   }
-  return compiler.append(val, node);
+  return compiler.append(value, node);
 }
 
 /**
- * Simplified assertion. Throws an error is `val` is falsey.
+ * Simplified assertion. Throws an error is `value` is falsey.
  */
 
-function assert(val, message) {
-  if (!val) throw new Error(message);
+function assert(value, message) {
+  if (!value) throw new Error(message);
+}
+function expect(node, name, Node) {
+  const isNode = (Node && Node.isNode) ? Node.isNode : utils.isNode;
+  assert(isNode(node), `expected ${name} to be an instance of Node`);
 }

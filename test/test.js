@@ -4,11 +4,34 @@ require('mocha');
 var assert = require('assert');
 var Parser = require('snapdragon/lib/parser');
 var Compiler = require('snapdragon/lib/compiler');
-var Node = require('snapdragon-node');
 var decorate = require('./support');
 var utils = require('..');
 var parser;
 var ast;
+
+class Node {
+  constructor(node) {
+    this.define(this, 'parent', null);
+    this.isNode = true;
+    this.type = node.type;
+    this.value = node.value;
+    if (node.nodes) {
+      this.nodes = node.nodes;
+    }
+  }
+  define(key, value) {
+    Object.defineProperty(this, key, { value: value });
+    return this;
+  }
+  get siblings() {
+    return this.parent ? this.parent.nodes : null;
+  }
+  get last() {
+    if (this.nodes && this.nodes.length) {
+      return this.nodes[this.nodes.length - 1];
+    }
+  }
+}
 
 describe('snapdragon-node', function() {
   beforeEach(function() {
@@ -32,8 +55,9 @@ describe('snapdragon-node', function() {
         }
       })
 
-    ast = parser.parse('a/*/c');
-    ast.isNode = true;
+    ast = new Node(parser.parse('a/*/c'));
+
+    // console.log(ast)
   });
 
   describe('.arrayify', function() {
@@ -61,7 +85,7 @@ describe('snapdragon-node', function() {
   });
 
   describe('.identity', function() {
-    it('should return node.val as it was created by the parser', function() {
+    it('should return node.value as it was created by the parser', function() {
       var res = new Compiler()
         .set('star', utils.identity)
         .set('slash', utils.identity)
@@ -135,7 +159,7 @@ describe('snapdragon-node', function() {
 
     it('should throw an error when node.nodes is not an array', function() {
       assert.throws(function() {
-        utils.visit(new Node({type: 'foo', val: ''}));
+        utils.visit(new Node({type: 'foo', value: ''}));
       });
     });
 
@@ -159,7 +183,7 @@ describe('snapdragon-node', function() {
 
     it('should throw an error when node.nodes is not an array', function() {
       assert.throws(function() {
-        utils.mapVisit(new Node({type: 'foo', val: ''}));
+        utils.mapVisit(new Node({type: 'foo', value: ''}));
       });
     });
 
@@ -183,8 +207,8 @@ describe('snapdragon-node', function() {
 
     it('should add a node to the end of node.nodes', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
       utils.pushNode(node, a);
       utils.pushNode(node, b);
       assert.equal(node.nodes[0].type, 'a');
@@ -193,8 +217,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.push is not a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       node.pushNode = null;
       node.push = null;
@@ -213,16 +237,10 @@ describe('snapdragon-node', function() {
       });
     });
 
-    it('should throw an error when node is not a node', function() {
-      assert.throws(function() {
-        utils.unshiftNode(new Node({type: 'foo'}));
-      });
-    });
-
     it('should add a node to the beginning of node.nodes', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
       utils.unshiftNode(node, a);
       utils.unshiftNode(node, b);
       assert.equal(node.nodes[1].type, 'a');
@@ -231,8 +249,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.unshift is not a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       node.unshiftNode = null;
       node.unshift = null;
@@ -253,8 +271,8 @@ describe('snapdragon-node', function() {
 
     it('should pop a node from node.nodes', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
       utils.pushNode(node, a);
       utils.pushNode(node, b);
       assert.equal(node.nodes[0].type, 'a');
@@ -267,8 +285,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.pop is not a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       node.popNode = null;
       node.pop = null;
@@ -285,8 +303,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.pop is a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       decorate(node);
 
@@ -310,8 +328,8 @@ describe('snapdragon-node', function() {
 
     it('should shift a node from node.nodes', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
       utils.pushNode(node, a);
       utils.pushNode(node, b);
       assert.equal(node.nodes[0].type, 'a');
@@ -324,8 +342,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.shift is not a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       node.shiftNode = null;
       node.shift = null;
@@ -342,8 +360,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.shift is a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       decorate(node);
 
@@ -367,8 +385,8 @@ describe('snapdragon-node', function() {
 
     it('should remove a node from node.nodes', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
       utils.pushNode(node, a);
       utils.pushNode(node, b);
       assert.equal(node.nodes[0].type, 'a');
@@ -383,8 +401,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.remove is not a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       node.removeNode = null;
       node.remove = null;
@@ -403,8 +421,8 @@ describe('snapdragon-node', function() {
 
     it('should work when node.remove is a function', function() {
       var node = new Node({type: 'brace'});
-      var a = new Node({type: 'a', val: 'foo'});
-      var b = new Node({type: 'b', val: 'foo'});
+      var a = new Node({type: 'a', value: 'foo'});
+      var b = new Node({type: 'b', value: 'foo'});
 
       decorate(node);
 
@@ -462,14 +480,14 @@ describe('snapdragon-node', function() {
 
     it('should add an open node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.addOpen(node, Node);
       assert.equal(node.nodes[0].type, 'brace.open');
     });
 
     it('should work when node.unshift is a function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       decorate(node);
       utils.addOpen(node, Node);
       assert.equal(node.nodes[0].type, 'brace.open');
@@ -477,7 +495,7 @@ describe('snapdragon-node', function() {
 
     it('should work when node.unshift is not a function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       node.unshiftNode = null;
       node.unshift = null;
       utils.addOpen(node, Node);
@@ -486,7 +504,7 @@ describe('snapdragon-node', function() {
 
     it('should take a filter function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.addOpen(node, Node, function(node) {
         return node.type !== 'brace';
       });
@@ -495,9 +513,9 @@ describe('snapdragon-node', function() {
 
     it('should use the given value on the open node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.addOpen(node, Node, '{');
-      assert.equal(node.nodes[0].val, '{');
+      assert.equal(node.nodes[0].value, '{');
     });
   });
 
@@ -510,7 +528,7 @@ describe('snapdragon-node', function() {
 
     it('should add a close node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.pushNode(node, text);
       utils.addClose(node, Node);
 
@@ -520,7 +538,7 @@ describe('snapdragon-node', function() {
 
     it('should work when node.push is not a function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       node.pushNode = null;
       node.push = null;
 
@@ -533,7 +551,7 @@ describe('snapdragon-node', function() {
 
     it('should work when node.push is a function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       decorate(node);
 
       utils.pushNode(node, text);
@@ -545,7 +563,7 @@ describe('snapdragon-node', function() {
 
     it('should take a filter function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.addClose(node, Node, function(node) {
         return node.type !== 'brace';
       });
@@ -554,9 +572,9 @@ describe('snapdragon-node', function() {
 
     it('should use the given value on the close node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.addClose(node, Node, '}');
-      assert.equal(node.nodes[0].val, '}');
+      assert.equal(node.nodes[0].value, '}');
     });
   });
 
@@ -569,7 +587,7 @@ describe('snapdragon-node', function() {
 
     it('should add an open node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.wrapNodes(node, Node);
 
       assert.equal(node.nodes[0].type, 'brace.open');
@@ -577,7 +595,7 @@ describe('snapdragon-node', function() {
 
     it('should add a close node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       utils.pushNode(node, text);
       utils.wrapNodes(node, Node);
 
@@ -594,17 +612,17 @@ describe('snapdragon-node', function() {
       });
     });
 
-    it('should return true node.val is an empty string', function() {
-      assert(utils.isEmpty(new Node({type: 'text', val: ''})));
+    it('should return true node.value is an empty string', function() {
+      assert(utils.isEmpty(new Node({type: 'text', value: ''})));
     });
 
-    it('should return true node.val is undefined', function() {
+    it('should return true node.value is undefined', function() {
       assert(utils.isEmpty(new Node({type: 'text'})));
     });
 
     it('should return true when node.nodes is empty', function() {
       var foo = new Node({type: 'foo'});
-      var bar = new Node({type: 'text', val: 'bar'});
+      var bar = new Node({type: 'text', value: 'bar'});
       utils.pushNode(foo, bar);
       assert(!utils.isEmpty(foo));
       utils.shiftNode(foo);
@@ -624,11 +642,9 @@ describe('snapdragon-node', function() {
 
     it('should return call a custom function if only one node exists', function() {
       var foo = new Node({type: 'foo'});
-      var text = new Node({type: 'text', val: ''});
+      var text = new Node({type: 'text', value: ''});
       utils.pushNode(foo, text);
-      assert(utils.isEmpty(foo, function(node) {
-        return node.type === 'text' && !node.val.trim();
-      }));
+      assert(utils.isEmpty(foo, node => !node.value));
     });
 
     it('should return true when only open and close nodes exist', function() {
@@ -643,7 +659,7 @@ describe('snapdragon-node', function() {
     it('should call a custom function on "middle" nodes (1)', function() {
       var brace = new Node({type: 'brace'});
       var open = new Node({type: 'brace.open'});
-      var text = new Node({type: 'text', val: ''});
+      var text = new Node({type: 'text', value: ''});
       var close = new Node({type: 'brace.close'});
       utils.pushNode(brace, open);
       utils.pushNode(brace, text);
@@ -651,32 +667,32 @@ describe('snapdragon-node', function() {
       utils.pushNode(brace, text);
       utils.pushNode(brace, close);
       assert(utils.isEmpty(brace, function(node) {
-        if (node.type !== 'text') {
-          return false;
+        if (node.nodes && node.nodes.length === 0) {
+          return true;
         }
-        return node.val.trim() === '';
+        return !utils.value(node);
       }));
     });
 
     it('should call a custom function on "middle" nodes (2)', function() {
       var brace = new Node({type: 'brace'});
       var open = new Node({type: 'brace.open'});
-      var text = new Node({type: 'text', val: ''});
+      var text = new Node({type: 'text', value: ''});
       var close = new Node({type: 'brace.close'});
       utils.pushNode(brace, open);
       utils.pushNode(brace, text);
       utils.pushNode(brace, text);
       utils.pushNode(brace, text);
       utils.pushNode(brace, close);
-      assert(!utils.isEmpty(brace, function(node, parent) {
-        return parent.nodes.length === 0;
+      assert(!utils.isEmpty(brace, function(node) {
+        return node.parent.nodes.length === 0;
       }));
     });
 
     it('should call a custom function on "middle" nodes (3)', function() {
       var brace = new Node({type: 'brace'});
       var open = new Node({type: 'brace.open'});
-      var text = new Node({type: 'text', val: 'foo'});
+      var text = new Node({type: 'text', value: 'foo'});
       var close = new Node({type: 'brace.close'});
       utils.pushNode(brace, open);
       utils.pushNode(brace, text);
@@ -685,15 +701,15 @@ describe('snapdragon-node', function() {
         if (node.type !== 'text') {
           return false;
         }
-        return node.val.trim() === '';
+        return node.value.trim() === '';
       }));
     });
 
     it('should call a custom function on "middle" nodes (4)', function() {
       var brace = new Node({type: 'brace'});
       var open = new Node({type: 'brace.open'});
-      var empty = new Node({type: 'text', val: ''});
-      var text = new Node({type: 'text', val: 'foo'});
+      var empty = new Node({type: 'text', value: ''});
+      var text = new Node({type: 'text', value: 'foo'});
       var close = new Node({type: 'brace.close'});
       utils.pushNode(brace, open);
       utils.pushNode(brace, empty);
@@ -706,22 +722,21 @@ describe('snapdragon-node', function() {
         if (node.type !== 'text') {
           return false;
         }
-        return node.val.trim() === '';
+        return node.value.trim() === '';
       }));
     });
   });
 
   describe('.isType', function() {
-    it('should throw an error when not a node', function() {
-      assert.throws(function() {
-        utils.isType();
-      });
-    });
-
     it('should throw an error when matcher is invalid', function() {
       assert.throws(function() {
         utils.isType(new Node({type: 'foo'}));
       });
+    });
+
+    it('should return false if the node is not the given type', function() {
+      assert(!utils.isType());
+      assert(!utils.isType({}, 'root'));
     });
 
     it('should return true if the node is the given type', function() {
@@ -870,12 +885,6 @@ describe('snapdragon-node', function() {
   });
 
   describe('.hasType', function() {
-    it('should throw an error when not a node', function() {
-      assert.throws(function() {
-        utils.hasType();
-      });
-    });
-
     it('should return true if node.nodes has the given type', function() {
       assert(utils.hasType(ast, 'text'));
       assert(!utils.hasType(ast, 'foo'));
@@ -944,12 +953,6 @@ describe('snapdragon-node', function() {
       });
     });
 
-    it('should throw an error when child is not a node', function() {
-      assert.throws(function() {
-        utils.removeNode(new Node({type: 'foo'}));
-      });
-    });
-
     it('should remove a node from parent.nodes', function() {
       var brace = new Node({type: 'brace'});
       var open = new Node({type: 'brace.open'});
@@ -985,12 +988,6 @@ describe('snapdragon-node', function() {
   });
 
   describe('.isOpen', function() {
-    it('should throw an error when not a node', function() {
-      assert.throws(function() {
-        utils.isOpen();
-      });
-    });
-
     it('should be true if node is an ".open" node', function() {
       var node = new Node({type: 'foo.open'});
       assert(utils.isOpen(node));
@@ -1003,12 +1000,6 @@ describe('snapdragon-node', function() {
   });
 
   describe('.isClose', function() {
-    it('should throw an error when not a node', function() {
-      assert.throws(function() {
-        utils.isClose();
-      });
-    });
-
     it('should be true if node is a ".close" node', function() {
       var node = new Node({type: 'foo.close'});
       assert(utils.isClose(node));
@@ -1100,12 +1091,6 @@ describe('snapdragon-node', function() {
       });
     });
 
-    it('should throw an error when child is not a node', function() {
-      assert.throws(function() {
-        utils.pushNode(new Node({type: 'foo'}));
-      });
-    });
-
     it('should add a node to `node.nodes`', function() {
       var node = new Node({type: 'foo'});
       utils.pushNode(ast, node);
@@ -1118,7 +1103,7 @@ describe('snapdragon-node', function() {
       assert.equal(node.parent.type, 'root');
     });
 
-    it('should set the parent.nodes as `.siblings` on the given node', function() {
+    it('should set the parent.nodes as node.siblings', function() {
       var node = new Node({type: 'foo'});
       assert.equal(node.siblings, null);
       utils.pushNode(ast, node);

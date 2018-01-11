@@ -25,13 +25,13 @@ module.exports = function(node) {
    * node.define('foo', 'something non-enumerable');
    * ```
    * @param {String} `name`
-   * @param {any} `val`
+   * @param {any} `value`
    * @return {Object} returns the node instance
    * @api public
    */
 
-  node.define = function(name, val) {
-    define(this, name, val);
+  node.define = function(name, value) {
+    define(this, name, value);
     return this;
   };
 
