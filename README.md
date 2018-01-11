@@ -1,4 +1,4 @@
-# snapdragon-util [![NPM version](https://img.shields.io/npm/v/snapdragon-util.svg?style=flat)](https://www.npmjs.com/package/snapdragon-util) [![NPM monthly downloads](https://img.shields.io/npm/dm/snapdragon-util.svg?style=flat)](https://npmjs.org/package/snapdragon-util) [![NPM total downloads](https://img.shields.io/npm/dt/snapdragon-util.svg?style=flat)](https://npmjs.org/package/snapdragon-util) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/snapdragon-util.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/snapdragon-util)
+# snapdragon-util [![NPM version](https://img.shields.io/npm/v/snapdragon-util.svg?style=flat)](https://www.npmjs.com/package/snapdragon-util) [![NPM monthly downloads](https://img.shields.io/npm/dm/snapdragon-util.svg?style=flat)](https://npmjs.org/package/snapdragon-util) [![NPM total downloads](https://img.shields.io/npm/dt/snapdragon-util.svg?style=flat)](https://npmjs.org/package/snapdragon-util) [![Linux Build Status](https://img.shields.io/travis/here-be/snapdragon-util.svg?style=flat&label=Travis)](https://travis-ci.org/here-be/snapdragon-util)
 
 > Utilities for the snapdragon parser/compiler.
 
@@ -54,9 +54,27 @@ Emit an empty string for the given `node`.
 snapdragon.compiler.set('bos', utils.noop);
 ```
 
-### [.identity](index.js#L52)
+### [.value](index.js#L54)
 
-Appdend `node.val` to `compiler.output`, exactly as it was created by the parser.
+Returns `node.value` or `node.val`.
+
+**Params**
+
+* `node` **{Object}**: Instance of [snapdragon-node](https://github.com/jonschlinkert/snapdragon-node)
+* `returns` **{String}**: returns
+
+**Example**
+
+```js
+const star = new Node({type: 'star', value: '*'});
+const slash = new Node({type: 'slash', val: '/'});
+console.log(utils.value(star)) //=> '*'
+console.log(utils.value(slash)) //=> '/'
+```
+
+### [.identity](index.js#L72)
+
+Append `node.value` to `compiler.output`.
 
 **Params**
 
@@ -69,9 +87,9 @@ Appdend `node.val` to `compiler.output`, exactly as it was created by the parser
 snapdragon.compiler.set('text', utils.identity);
 ```
 
-### [.append](index.js#L75)
+### [.append](index.js#L95)
 
-Previously named `.emit`, this method appends the given `val` to `compiler.output` for the given node. Useful when you know what value should be appended advance, regardless of the actual value of `node.val`.
+Previously named `.emit`, this method appends the given `value` to `compiler.output` for the given node. Useful when you know what value should be appended advance, regardless of the actual value of `node.value`.
 
 **Params**
 
@@ -89,7 +107,7 @@ snapdragon.compiler
   .set('i.close', utils.append('</i>'))
 ```
 
-### [.toNoop](index.js#L98)
+### [.toNoop](index.js#L118)
 
 Used in compiler middleware, this onverts an AST node into an empty `text` node and deletes `node.nodes` if it exists. The advantage of this method is that, as opposed to completely removing the node, indices will not need to be re-calculated in sibling nodes, and nothing is appended to the output.
 
@@ -106,7 +124,7 @@ utils.toNoop(node);
 utils.toNoop(node, []);
 ```
 
-### [.visit](index.js#L127)
+### [.visit](index.js#L147)
 
 Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon automatically calls registered compilers, this allows you to pass a visitor function.
 
@@ -127,7 +145,7 @@ snapdragon.compiler.set('i', function(node) {
 });
 ```
 
-### [.mapVisit](index.js#L154)
+### [.mapVisit](index.js#L174)
 
 Map [visit](#visit) the given `fn` over `node.nodes`. This is called by [visit](#visit), use this method if you do not want `fn` to be called on the first node.
 
@@ -149,7 +167,7 @@ snapdragon.compiler.set('i', function(node) {
 });
 ```
 
-### [.addOpen](index.js#L193)
+### [.addOpen](index.js#L213)
 
 Unshift an `*.open` node onto `node.nodes`.
 
@@ -170,7 +188,7 @@ snapdragon.parser.set('brace', function(node) {
     var parent = new Node({type: 'brace'});
     utils.addOpen(parent, Node);
     console.log(parent.nodes[0]):
-    // { type: 'brace.open', val: '' };
+    // { type: 'brace.open', value: '' };
 
     // push the parent "brace" node onto the stack
     this.push(parent);
@@ -181,7 +199,7 @@ snapdragon.parser.set('brace', function(node) {
 });
 ```
 
-### [.addClose](index.js#L243)
+### [.addClose](index.js#L263)
 
 Push a `*.close` node onto `node.nodes`.
 
@@ -206,7 +224,7 @@ snapdragon.parser.set('brace', function(node) {
 
     utils.addClose(parent, Node);
     console.log(parent.nodes[parent.nodes.length - 1]):
-    // { type: 'brace.close', val: '' };
+    // { type: 'brace.close', value: '' };
 
     // no need to return a node, since the parent
     // was already added to the AST
@@ -215,7 +233,7 @@ snapdragon.parser.set('brace', function(node) {
 });
 ```
 
-### [.wrapNodes](index.js#L273)
+### [.wrapNodes](index.js#L293)
 
 Wraps the given `node` with `*.open` and `*.close` nodes.
 
@@ -226,7 +244,7 @@ Wraps the given `node` with `*.open` and `*.close` nodes.
 * `filter` **{Function}**: Optionaly specify a filter function to exclude the node.
 * `returns` **{Object}**: Returns the node
 
-### [.pushNode](index.js#L298)
+### [.pushNode](index.js#L318)
 
 Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
 
@@ -246,7 +264,7 @@ console.log(parent.nodes[0].type) // 'bar'
 console.log(node.parent.type) // 'foo'
 ```
 
-### [.unshiftNode](index.js#L324)
+### [.unshiftNode](index.js#L348)
 
 Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
 
@@ -266,7 +284,7 @@ console.log(parent.nodes[0].type) // 'bar'
 console.log(node.parent.type) // 'foo'
 ```
 
-### [.popNode](index.js#L353)
+### [.popNode](index.js#L381)
 
 Pop the last `node` off of `parent.nodes`. The advantage of using this method is that it checks for `node.nodes` and works with any version of `snapdragon-node`.
 
@@ -288,7 +306,7 @@ utils.popNode(parent);
 console.log(parent.nodes.length); //=> 2
 ```
 
-### [.shiftNode](index.js#L381)
+### [.shiftNode](index.js#L409)
 
 Shift the first `node` off of `parent.nodes`. The advantage of using this method is that it checks for `node.nodes` and works with any version of `snapdragon-node`.
 
@@ -310,7 +328,7 @@ utils.shiftNode(parent);
 console.log(parent.nodes.length); //=> 2
 ```
 
-### [.removeNode](index.js#L408)
+### [.removeNode](index.js#L436)
 
 Remove the specified `node` from `parent.nodes`.
 
@@ -333,7 +351,7 @@ utils.removeNode(parent, foo);
 console.log(parent.nodes.length); //=> 2
 ```
 
-### [.isType](index.js#L442)
+### [.isType](index.js#L467)
 
 Returns true if `node.type` matches the given `type`. Throws a `TypeError` if `node` is not an instance of `Node`.
 
@@ -352,7 +370,7 @@ console.log(utils.isType(node, 'foo')); // false
 console.log(utils.isType(node, 'bar')); // true
 ```
 
-### [.hasType](index.js#L485)
+### [.hasType](index.js#L509)
 
 Returns true if the given `node` has the given `type` in `node.nodes`. Throws a `TypeError` if `node` is not an instance of `Node`.
 
@@ -377,7 +395,7 @@ console.log(utils.hasType(node, 'xyz')); // false
 console.log(utils.hasType(node, 'baz')); // true
 ```
 
-### [.firstOfType](index.js#L518)
+### [.firstOfType](index.js#L542)
 
 Returns the first node from `node.nodes` of the given `type`
 
@@ -393,17 +411,17 @@ Returns the first node from `node.nodes` of the given `type`
 var node = new Node({
   type: 'foo',
   nodes: [
-    new Node({type: 'text', val: 'abc'}),
-    new Node({type: 'text', val: 'xyz'})
+    new Node({type: 'text', value: 'abc'}),
+    new Node({type: 'text', value: 'xyz'})
   ]
 });
 
 var textNode = utils.firstOfType(node.nodes, 'text');
-console.log(textNode.val);
+console.log(textNode.value);
 //=> 'abc'
 ```
 
-### [.findNode](index.js#L555)
+### [.findNode](index.js#L578)
 
 Returns the node at the specified index, or the first node of the given `type` from `node.nodes`.
 
@@ -419,21 +437,21 @@ Returns the node at the specified index, or the first node of the given `type` f
 var node = new Node({
   type: 'foo',
   nodes: [
-    new Node({type: 'text', val: 'abc'}),
-    new Node({type: 'text', val: 'xyz'})
+    new Node({type: 'text', value: 'abc'}),
+    new Node({type: 'text', value: 'xyz'})
   ]
 });
 
 var nodeOne = utils.findNode(node.nodes, 'text');
-console.log(nodeOne.val);
+console.log(nodeOne.value);
 //=> 'abc'
 
 var nodeTwo = utils.findNode(node.nodes, 1);
-console.log(nodeTwo.val);
+console.log(nodeTwo.value);
 //=> 'xyz'
 ```
 
-### [.isOpen](index.js#L583)
+### [.isOpen](index.js#L602)
 
 Returns true if the given node is an "*.open" node.
 
@@ -455,7 +473,7 @@ console.log(utils.isOpen(open)); // true
 console.log(utils.isOpen(close)); // false
 ```
 
-### [.isClose](index.js#L606)
+### [.isClose](index.js#L631)
 
 Returns true if the given node is a "*.close" node.
 
@@ -477,7 +495,50 @@ console.log(utils.isClose(open)); // false
 console.log(utils.isClose(close)); // true
 ```
 
-### [.hasOpen](index.js#L632)
+### [.isBlock](index.js#L662)
+
+Returns true if the given node is an "*.open" node.
+
+**Params**
+
+* `node` **{Object}**: Instance of [snapdragon-node](https://github.com/jonschlinkert/snapdragon-node)
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+var Node = require('snapdragon-node');
+var brace = new Node({type: 'brace'});
+var open = new Node({type: 'brace.open', value: '{'});
+var inner = new Node({type: 'text', value: 'a,b,c'});
+var close = new Node({type: 'brace.close', value: '}'});
+brace.push(open);
+brace.push(inner);
+brace.push(close);
+
+console.log(utils.isBlock(brace)); // true
+```
+
+### [.hasNode](index.js#L691)
+
+Returns true if `parent.nodes` has the given `node`.
+
+**Params**
+
+* `type` **{String}**
+* `returns` **{Boolean}**
+
+**Example**
+
+```js
+const foo = new Node({type: 'foo'});
+const bar = new Node({type: 'bar'});
+cosole.log(util.hasNode(foo, bar)); // false
+foo.push(bar);
+cosole.log(util.hasNode(foo, bar)); // true
+```
+
+### [.hasOpen](index.js#L723)
 
 Returns true if `node.nodes` **has** an `.open` node
 
@@ -502,7 +563,7 @@ brace.pushNode(open);
 console.log(utils.hasOpen(brace)); // true
 ```
 
-### [.hasClose](index.js#L662)
+### [.hasClose](index.js#L754)
 
 Returns true if `node.nodes` **has** a `.close` node
 
@@ -527,7 +588,7 @@ brace.pushNode(close);
 console.log(utils.hasClose(brace)); // true
 ```
 
-### [.hasOpenAndClose](index.js#L696)
+### [.hasOpenAndClose](index.js#L789)
 
 Returns true if `node.nodes` has both `.open` and `.close` nodes
 
@@ -556,7 +617,7 @@ console.log(utils.hasOpen(brace)); // true
 console.log(utils.hasClose(brace)); // true
 ```
 
-### [.addType](index.js#L718)
+### [.addType](index.js#L811)
 
 Push the given `node` onto the `state.inside` array for the given type. This array is used as a specialized "stack" for only the given `node.type`.
 
@@ -576,7 +637,7 @@ console.log(state.inside);
 //=> { brace: [{type: 'brace'}] }
 ```
 
-### [.removeType](index.js#L758)
+### [.removeType](index.js#L851)
 
 Remove the given `node` from the `state.inside` array for the given type. This array is used as a specialized "stack" for only the given `node.type`.
 
@@ -598,9 +659,9 @@ utils.removeType(state, node);
 //=> { brace: [] }
 ```
 
-### [.isEmpty](index.js#L787)
+### [.isEmpty](index.js#L880)
 
-Returns true if `node.val` is an empty string, or `node.nodes` does not contain any non-empty text nodes.
+Returns true if `node.value` is an empty string, or `node.nodes` does not contain any non-empty text nodes.
 
 **Params**
 
@@ -613,11 +674,11 @@ Returns true if `node.val` is an empty string, or `node.nodes` does not contain 
 ```js
 var node = new Node({type: 'text'});
 utils.isEmpty(node); //=> true
-node.val = 'foo';
+node.value = 'foo';
 utils.isEmpty(node); //=> false
 ```
 
-### [.isInsideType](index.js#L832)
+### [.isInsideType](index.js#L922)
 
 Returns true if the `state.inside` stack for the given type exists and has one or more nodes on it.
 
@@ -639,7 +700,7 @@ utils.removeType(state, node);
 console.log(utils.isInsideType(state, 'brace')); //=> false
 ```
 
-### [.isInside](index.js#L866)
+### [.isInside](index.js#L956)
 
 Returns true if `node` is either a child or grand-child of the given `type`, or `state.inside[type]` is a non-empty array.
 
@@ -661,7 +722,7 @@ utils.pushNode(node, open);
 console.log(utils.isInside(state, open, 'brace')); //=> true
 ```
 
-### [.last](index.js#L914)
+### [.last](index.js#L1004)
 
 Get the last `n` element from the given `array`. Used for getting
 a node from `node.nodes.`
@@ -672,13 +733,13 @@ a node from `node.nodes.`
 * `n` **{Number}**
 * `returns` **{undefined}**
 
-### [.arrayify](index.js#L934)
+### [.arrayify](index.js#L1028)
 
-Cast the given `val` to an array.
+Cast the given `value` to an array.
 
 **Params**
 
-* `val` **{any}**
+* `value` **{any}**
 * `returns` **{Array}**
 
 **Example**
@@ -692,17 +753,17 @@ console.log(utils.arrayify(['foo']));
 //=> ['foo']
 ```
 
-### [.stringify](index.js#L953)
+### [.stringify](index.js#L1047)
 
-Convert the given `val` to a string by joining with `,`. Useful
+Convert the given `value` to a string by joining with `,`. Useful
 for creating a cheerio/CSS/DOM-style selector from a list of strings.
 
 **Params**
 
-* `val` **{any}**
+* `value` **{any}**
 * `returns` **{Array}**
 
-### [.trim](index.js#L966)
+### [.trim](index.js#L1060)
 
 Ensure that the given value is a string and call `.trim()` on it,
 or return an empty string.
@@ -711,47 +772,6 @@ or return an empty string.
 
 * `str` **{String}**
 * `returns` **{String}**
-
-## Release history
-
-Changelog entries are classified using the following labels from [keep-a-changelog](https://github.com/olivierlacan/keep-a-changelog):
-
-* `added`: for new features
-* `changed`: for changes in existing functionality
-* `deprecated`: for once-stable features removed in upcoming releases
-* `removed`: for deprecated features removed in this release
-* `fixed`: for any bug fixes
-
-Custom labels used in this changelog:
-
-* `dependencies`: bumps dependencies
-* `housekeeping`: code re-organization, minor edits, or other changes that don't fit in one of the other categories.
-
-### [4.0.0] - 2017-11-01
-
-**Dependencies**
-
-* Updated `kind-of` to version 6.0
-
-### [3.0.0] - 2017-05-01
-
-**Changed**
-
-* `.emit` was renamed to [.append](#append)
-* `.addNode` was renamed to [.pushNode](#pushNode)
-* `.getNode` was renamed to [.findNode](#findNode)
-* `.isEmptyNodes` was renamed to [.isEmpty](#isEmpty): also now works with `node.nodes` and/or `node.val`
-
-**Added**
-
-* [.identity](#identity)
-* [.removeNode](#removeNode)
-* [.shiftNode](#shiftNode)
-* [.popNode](#popNode)
-
-### [0.1.0]
-
-First release.
 
 ## About
 
@@ -774,7 +794,6 @@ $ npm install && npm test
 ```
 
 </details>
-
 <details>
 <summary><strong>Building docs</strong></summary>
 
@@ -788,25 +807,34 @@ $ npm install -g verbose/verb#dev verb-generate-readme && verb
 
 </details>
 
+### Related projects
+
+You might also be interested in these projects:
+
+* [snapdragon-node](https://www.npmjs.com/package/snapdragon-node): Snapdragon utility for creating a new AST node in custom code, such as plugins. | [homepage](https://github.com/jonschlinkert/snapdragon-node "Snapdragon utility for creating a new AST node in custom code, such as plugins.")
+* [snapdragon-position](https://www.npmjs.com/package/snapdragon-position): Snapdragon util and plugin for patching the position on an AST node. | [homepage](https://github.com/here-be/snapdragon-position "Snapdragon util and plugin for patching the position on an AST node.")
+* [snapdragon-token](https://www.npmjs.com/package/snapdragon-token): Create a snapdragon token. Used by the snapdragon lexer, but can also be used by… [more](https://github.com/here-be/snapdragon-token) | [homepage](https://github.com/here-be/snapdragon-token "Create a snapdragon token. Used by the snapdragon lexer, but can also be used by plugins.")
+
 ### Contributors
 
 | **Commits** | **Contributor** | 
 | --- | --- |
-| 40 | [jonschlinkert](https://github.com/jonschlinkert) |
+| 43 | [jonschlinkert](https://github.com/jonschlinkert) |
 | 2 | [realityking](https://github.com/realityking) |
 
 ### Author
 
 **Jon Schlinkert**
 
+* [linkedin/in/jonschlinkert](https://linkedin.com/in/jonschlinkert)
 * [github/jonschlinkert](https://github.com/jonschlinkert)
 * [twitter/jonschlinkert](https://twitter.com/jonschlinkert)
 
 ### License
 
-Copyright © 2017, [Jon Schlinkert](https://github.com/jonschlinkert).
+Copyright © 2018, [Jon Schlinkert](https://github.com/jonschlinkert).
 Released under the [MIT License](LICENSE).
 
 ***
 
-_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.6.0, on November 01, 2017._
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.6.0, on January 11, 2018._
