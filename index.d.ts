@@ -111,7 +111,7 @@ export interface NodeLike<T> {
  */
 export interface NodeLikeConstructor<T> {
     new(value: object, parent?: NodeLike<T>): NodeLike<T>;
-    new(value: string, type?: string, parent?: NodeLike<T>): NodeLike<T>;
+    new(value: string, type: string, parent?: NodeLike<T>): NodeLike<T>;
 }
 
 /**
