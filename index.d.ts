@@ -1,7 +1,7 @@
 /**
  * An interface that describes what structure is expected from Snapdragon's Node.
  */
-declare interface NodeLike<T> {
+export interface NodeLike<T> {
     /**
      * Property that is always present and true in Node.
      */
@@ -109,7 +109,7 @@ declare interface NodeLike<T> {
 /**
  * An interface that describes what constructor is expected from Snapdragon's Node.
  */
-declare interface NodeLikeConstructor<T> {
+export interface NodeLikeConstructor<T> {
     new(value: object, parent?: NodeLike<T>): NodeLike<T>;
     new(value: string, type?: string, parent?: NodeLike<T>): NodeLike<T>;
 }
@@ -117,7 +117,7 @@ declare interface NodeLikeConstructor<T> {
 /**
  * An interface that describes what object structure should be expected for State object.
  */
-declare interface StateLike<T> {
+export interface StateLike<T> {
     inside?: {
         [type: string]: NodeLike<T>[]
     }
@@ -126,7 +126,7 @@ declare interface StateLike<T> {
 /**
  * An interface that describes what object structure must be for State object.
  */
-declare interface State<T> {
+export interface State<T> {
     inside: {
         [type: string]: NodeLike<T>[]
     }
