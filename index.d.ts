@@ -8,102 +8,99 @@ export interface NodeLike<T> {
     readonly isNode: true;
 
     /**
-     * Value property.
+     * `[Optional]` Value property.
      */
-    value: string;
+    value?: string;
 
     /**
-     * [Optional | Legacy] Value property.
+     * `[Optional | Legacy]` Value property.
      */
     val?: string;
 
     /**
-     * [Optional] Node's children.
+     * `[Optional]` Node's children.
      */
     nodes?: NodeLike<T>[];
 
     /**
-     * [Optional] Parent node.
+     * `[Optional]` Parent node.
      */
     parent?: NodeLike<T>;
 
     /**
-     * Type property.
+     * `[Optional]` Type property.
      */
-    type: string;
+    type?: string;
 
     /**
-     * [Optional] Unshift node to children node array (`this.nodes`).
+     * `[Optional]` Unshift node to children node array (`this.nodes`).
      */
     unshift?: (node: NodeLike<T>) => number;
 
     /**
-     * [Optional] Unshift node to children node array (`this.nodes`).
+     * `[Optional]` Unshift node to children node array (`this.nodes`).
      */
     //TODO: Is this a legacy? Should it be removed?
     unshiftNode?: (node: NodeLike<T>) => number;
 
     /**
-     * [Optional] Push node to children node array (`this.nodes`).
+     * `[Optional]` Push node to children node array (`this.nodes`).
      */
     push?: (node: NodeLike<T>) => number;
 
     /**
-     * [Optional] Push node to children node array (`this.nodes`).
+     * `[Optional]` Push node to children node array (`this.nodes`).
      */
     //TODO: Is this a legacy? Should it be removed?
     pushNode?: (node: NodeLike<T>) => number;
 
     /**
-     * [Optional] Pop node from children node array (`this.nodes`).
+     * `[Optional]` Pop node from children node array (`this.nodes`).
      */
     pop?: () => NodeLike<T> | undefined;
 
     /**
-     * [Optional] Shift node from children node array (`this.nodes`).
+     * `[Optional]` Shift node from children node array (`this.nodes`).
      */
     shift?: () => NodeLike<T> | undefined;
 
     /**
-     * [Optional] Shift node from children node array (`this.nodes`).
+     * `[Optional]` Shift node from children node array (`this.nodes`).
      */
-    //TODO: Why null? Can't we skip index check and return empty array instead like it is supposed to happen?
     remove?: (node: NodeLike<T>) => NodeLike<T>[] | null;
 
     /**
-     * [Optional] Returns true if type matches `*.open` pattern.
+     * `[Optional]` Returns true if type matches `*.open` pattern.
      */
     //TODO: Check `utils.isOpen`.
     isOpen?: () => boolean;
 
     /**
-     * [Optional] Returns true if type matches `*.close` pattern.
+     * `[Optional]` Returns true if type matches `*.close` pattern.
      */
     //TODO: Check `utils.isClose`.
     isClose?: () => boolean;
 
     /**
-     * [Optional] Returns true if node is block.
+     * `[Optional]` Returns true if node is block.
      */
     //TODO: Check `utils.isBlock`.
     isBlock?: () => boolean;
 
     /**
-     * [Optional] Returns true if `node` exists in `this.nodes`.
+     * `[Optional]` Returns true if `node` exists in `this.nodes`.
      */
     has?: (node: NodeLike<T>) => boolean;
 
     /**
-     * [Optional] Getter that returns first child node.
+     * `[Optional]` Getter that returns first child node.
      */
-    //TODO: Can be undefined and null. Why not stick to undefined?
-    readonly first: NodeLike<T> | undefined | null;
+    readonly first?: NodeLike<T> | null;
 
     /**
-     * [Optional] Getter that returns last child node.
+     * `[Optional]` Getter that returns last child node.
      */
-    //TODO: Can be undefined and null. Why not stick to undefined?
-    readonly last: NodeLike<T> | undefined | null;
+    readonly last?: NodeLike<T> | null;
 }
 
 /**
