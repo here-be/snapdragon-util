@@ -5,7 +5,7 @@ declare interface NodeLike<T> {
     /**
      * Property that is always present and true in Node.
      */
-    readonly isNode: boolean;
+    readonly isNode: true;
 
     /**
      * Value property.
@@ -110,8 +110,8 @@ declare interface NodeLike<T> {
  * An interface that describes what constructor is expected from Snapdragon's Node.
  */
 declare interface NodeLikeConstructor<T> {
-    //TODO: What are the correct values for `val`?
-    new(val: { type: string, val?: string, value?: string } | string, type?: string, parent?: NodeLike<T>): NodeLike<T>;
+    new(value: object, parent?: NodeLike<T>): NodeLike<T>;
+    new(value: string, type?: string, parent?: NodeLike<T>): NodeLike<T>;
 }
 
 /**
@@ -143,7 +143,7 @@ declare interface State<T> {
  * ```
  */
 
-export function isNode<T>(node: NodeLike<T>): boolean;
+export function isNode<T>(node: T): node is NodeLike<T>;
 
 /**
  * Emit an empty string for the given `node`.
