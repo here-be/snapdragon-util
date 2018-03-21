@@ -8,16 +8,14 @@ declare interface NodeLike<T> {
     readonly isNode: boolean;
 
     /**
-     * [Optional] Value property.
-     */
-    //TODO: Which one is default or legacy?
-    value?: string;
-
-    /**
      * Value property.
      */
-    //TODO: Which one is default or legacy?
-    val: string;
+    value: string;
+
+    /**
+     * [Optional | Legacy] Value property.
+     */
+    val?: string;
 
     /**
      * [Optional] Node's children.
@@ -145,8 +143,7 @@ declare interface State<T> {
  * ```
  */
 
-//TODO(self): Just return boolean?
-export function isNode<T>(node: NodeLike<T>): node is NodeLike<T>;
+export function isNode<T>(node: NodeLike<T>): boolean;
 
 /**
  * Emit an empty string for the given `node`.
@@ -727,8 +724,7 @@ export function lastNode<T>(node: NodeLike<T>): NodeLike<T> | undefined | null;
  * ```
  */
 
-//TODO(self): fix this magic
-export function arrayify<T>(value: T): T[];
+export function arrayify<T>(value: T | T[]): T[];
 
 /**
  * Convert the given `value` to a string by joining with `,`. Useful
