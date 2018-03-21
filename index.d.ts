@@ -143,7 +143,7 @@ declare interface State<T> {
  * ```
  */
 
-export function isNode<T>(node: T): node is NodeLike<T>;
+export function isNode<T>(node: T): node is NodeLike<T> & T;
 
 /**
  * Emit an empty string for the given `node`.
