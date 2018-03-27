@@ -53,7 +53,7 @@ describe('snapdragon-node', function() {
         if (match) {
           return this.node(match[0]);
         }
-      })
+      });
 
     ast = new Node(parser.parse('a/*/c'));
 
@@ -120,7 +120,7 @@ describe('snapdragon-node', function() {
     });
 
     it('should use compiler.append method when it exists', function() {
-      var compiler = new Compiler()
+      var compiler = new Compiler();
       compiler.append = compiler.emit.bind(compiler);
 
       var res = compiler.set('star', utils.append('@'))
@@ -480,14 +480,12 @@ describe('snapdragon-node', function() {
 
     it('should add an open node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       utils.addOpen(node, Node);
       assert.equal(node.nodes[0].type, 'brace.open');
     });
 
     it('should work when node.unshift is a function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       decorate(node);
       utils.addOpen(node, Node);
       assert.equal(node.nodes[0].type, 'brace.open');
@@ -495,7 +493,6 @@ describe('snapdragon-node', function() {
 
     it('should work when node.unshift is not a function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       node.unshiftNode = null;
       node.unshift = null;
       utils.addOpen(node, Node);
@@ -504,7 +501,6 @@ describe('snapdragon-node', function() {
 
     it('should take a filter function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       utils.addOpen(node, Node, function(node) {
         return node.type !== 'brace';
       });
@@ -513,7 +509,6 @@ describe('snapdragon-node', function() {
 
     it('should use the given value on the open node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       utils.addOpen(node, Node, '{');
       assert.equal(node.nodes[0].value, '{');
     });
@@ -563,7 +558,6 @@ describe('snapdragon-node', function() {
 
     it('should take a filter function', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       utils.addClose(node, Node, function(node) {
         return node.type !== 'brace';
       });
@@ -572,7 +566,6 @@ describe('snapdragon-node', function() {
 
     it('should use the given value on the close node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       utils.addClose(node, Node, '}');
       assert.equal(node.nodes[0].value, '}');
     });
@@ -587,7 +580,6 @@ describe('snapdragon-node', function() {
 
     it('should add an open node', function() {
       var node = new Node({type: 'brace'});
-      var text = new Node({type: 'text', value: 'foo'});
       utils.wrapNodes(node, Node);
 
       assert.equal(node.nodes[0].type, 'brace.open');
@@ -734,9 +726,17 @@ describe('snapdragon-node', function() {
       });
     });
 
+    it('should throw if invalid arguments are provided', function() {
+      assert.throws(function() {
+        utils.isType();
+      });
+      assert.throws(function() {
+        utils.isType({}, 'root');
+      });
+    });
+
     it('should return false if the node is not the given type', function() {
-      assert(!utils.isType());
-      assert(!utils.isType({}, 'root'));
+      assert(!utils.isType(ast, 'bam'));
     });
 
     it('should return true if the node is the given type', function() {
@@ -760,13 +760,11 @@ describe('snapdragon-node', function() {
 
     it('should return false when state.inside is not an object', function() {
       var state = {};
-      var node = new Node({type: 'brace'});
       assert(!utils.isInsideType(state, 'brace'));
     });
 
     it('should return false when state.inside[type] is not an object', function() {
       var state = {inside: {}};
-      var node = new Node({type: 'brace'});
       assert(!utils.isInsideType(state, 'brace'));
     });
 
@@ -865,11 +863,13 @@ describe('snapdragon-node', function() {
       assert(!utils.isInside(state, node, /(foo|bar)/));
     });
 
-    it('should return false when type is invalie', function() {
+    it('should throw when type is invalid', function() {
       var state = { inside: {}};
       var node = new Node({type: 'brace'});
       utils.addType(state, node);
-      assert(!utils.isInside(state, node, null));
+      assert.throws(function() {
+        utils.isInside(state, node, null);
+      });
     });
 
     it('should return false when state does not have the given type', function() {
@@ -941,8 +941,10 @@ describe('snapdragon-node', function() {
       assert.equal(text.type, 'text');
     });
 
-    it('should return null when node does not exist', function() {
-      assert.equal(utils.findNode(new Node({type: 'foo'})), null);
+    it('should throw when node does not exist', function() {
+      assert.throws(function() {
+        utils.findNode(new Node({type: 'foo'}));
+      });
     });
   });
 
