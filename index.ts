@@ -1,6 +1,56 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const typeOf = require('kind-of');
+
+/**
+ * An interface that describes what structure is expected from Snapdragon's Node.
+ */
+export interface NodeLike<T> {
+    isNode?: boolean;
+    value?: string;
+    val?: string;
+    type?: string;
+    parent?: NodeLike<T>;
+    nodes?: NodeLike<T>[];
+    push?: (node: NodeLike<T>) => number;
+    pushNode?: (node: NodeLike<T>) => number;
+    unshift?: (node: NodeLike<T>) => number;
+    unshiftNode?: (node: NodeLike<T>) => number;
+    pop?: () => NodeLike<T> | undefined;
+    shift?: () => NodeLike<T> | undefined;
+    define?: <K extends string, V>(name: K, val: V) => (this & {[key in K]: V });
+    remove?: (node: NodeLike<T>) => NodeLike<T> | undefined;
+    isOpen?: (node: NodeLike<T>) => boolean;
+    isClose?: (node: NodeLike<T>) => boolean;
+    isBlock?: (node: NodeLike<T>) => boolean;
+    has?: (node: NodeLike<T>) => boolean;
+    readonly first?: NodeLike<T>;
+    readonly last?: NodeLike<T>;
+}
+
+/**
+ * An interface that describes what constructor is expected from Snapdragon's Node.
+ */
+export interface NodeLikeConstructor<T> {
+    new(value: object, parent?: NodeLike<T>): NodeLike<T>;
+    new(value: string, type: string, parent?: NodeLike<T>): NodeLike<T>;
+}
+
+/**
+ * An interface that describes what structure is expected from Snapdragon's Compiler.
+ */
+export interface CompilerLike<T> {
+    append?: (value: string, node: NodeLike<T>) => any | undefined;
+    emit?: (value: string, node: NodeLike<T>) => any | undefined;
+}
+
+/**
+ * An interface that describes what object structure should be expected for State object.
+ */
+export interface StateLike<T> {
+    inside?: {
+        [type: string]: NodeLike<T>[]
+    }
+}
+
 /**
  * Returns true if the given value is a node.
  *
@@ -11,10 +61,10 @@ const typeOf = require('kind-of');
  * console.log(utils.isNode({})); //=> false
  * ```
  */
-function isNode(node) {
-    return isObject(node) && node.isNode === true;
+export function isNode<T>(node: T): node is NodeLike<T> & T {
+    return isObject(node) && (node as any).isNode === true;
 }
-exports.isNode = isNode;
+
 /**
  * Emit an empty string for the given `node`.
  *
@@ -23,11 +73,12 @@ exports.isNode = isNode;
  * snapdragon.compiler.set('bos', utils.noop);
  * ```
  */
-function noop(node) {
+export function noop<T>(this: CompilerLike<T>, node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     appendToCompiler(this, '', node);
 }
-exports.noop = noop;
+
 /**
  * Returns `node.value` or `node.val`.
  *
@@ -38,12 +89,14 @@ exports.noop = noop;
  * console.log(utils.value(slash)) //=> '/'
  * ```
  */
+
 //TODO: is there really a need to check if (typeof node.value === 'string')?
-function value(node) {
+export function value<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     return node.value || node.val;
 }
-exports.value = value;
+
 /**
  * Append `node.value` to `compiler.output`.
  *
@@ -51,11 +104,12 @@ exports.value = value;
  * snapdragon.compiler.set('text', utils.identity);
  * ```
  */
-function identity(node) {
+export function identity<T>(this: CompilerLike<T>, node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     appendToCompiler(this, value(node) || '', node);
 }
-exports.identity = identity;
+
 /**
  * Previously named `.emit`, this method appends the given `value`
  * to `compiler.output` for the given node. Useful when you know
@@ -71,13 +125,14 @@ exports.identity = identity;
  *   .set('i.close', utils.append('</i>'))
  * ```
  */
-function append(value) {
-    return function (node) {
+export function append(value: string) {
+    return function <T>(this: CompilerLike<T>, node: NodeLike<T>) {
         assertType(isNode(node), 'expected "node" to be an instance of Node');
+
         appendToCompiler(this, value, node);
     };
 }
-exports.append = append;
+
 /**
  * Used in compiler middleware, this converts an AST node into
  * an empty `text` node and deletes `node.nodes` if it exists.
@@ -91,19 +146,19 @@ exports.append = append;
  * utils.toNoop(node, []);
  * ```
  */
-function toNoop(node, nodes) {
+export function toNoop<T>(node: NodeLike<T>, nodes?: Array<NodeLike<T>>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (nodes) {
         assertType(isArray(nodes), 'expected "nodes" to be an array');
         node.nodes = nodes;
-    }
-    else {
+    } else {
         delete node.nodes;
         node.type = 'text';
         node.value = '';
     }
 }
-exports.toNoop = toNoop;
+
 /**
  * Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon
  * automatically calls registered compilers, this allows you to pass a visitor
@@ -118,13 +173,15 @@ exports.toNoop = toNoop;
  * });
  * ```
  */
-function visit(node, fn) {
+export function visit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isFunction(fn), 'expected "fn" to be function');
+
     fn(node);
+
     return node.nodes ? mapVisit(node, fn) : node;
 }
-exports.visit = visit;
+
 /**
  * Map [visit](#visit) the given `fn` over `node.nodes`. This is called by
  * [visit](#visit), use this method if you do not want `fn` to be called on
@@ -139,9 +196,10 @@ exports.visit = visit;
  * });
  * ```
  */
-function mapVisit(node, fn) {
+export function mapVisit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isFunction(fn), 'expected "fn" to be function');
+
     if (Array.isArray(node.nodes)) {
         for (const child of node.nodes) {
             visit(child, fn);
@@ -150,48 +208,107 @@ function mapVisit(node, fn) {
     else if (node.nodes !== undefined) {
         throw new TypeError('expected "node.nodes" to be an array');
     }
+
     return node;
 }
-exports.mapVisit = mapVisit;
-function addOpen(node, Node, value, filter) {
+
+/**
+ * Unshift an `*.open` node onto `node.nodes`.
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * snapdragon.parser.set('brace', function(node) {
+ *   var match = this.match(/^{/);
+ *   if (match) {
+ *     var parent = new Node({type: 'brace'});
+ *     utils.addOpen(parent, Node);
+ *     console.log(parent.nodes[0]):
+ *     // { type: 'brace.open', value: '' };
+ *
+ *     // push the parent "brace" node onto the stack
+ *     this.push(parent);
+ *
+ *     // return the parent node, so it's also added to the AST
+ *     return brace;
+ *   }
+ * });
+ * ```
+ */
+export function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string | ((node: NodeLike<T>) => boolean), filter?: (node: NodeLike<T>) => boolean) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isFunction(Node), 'expected "Node" to be a constructor function');
+
     if (isFunction(value)) {
         filter = value;
         value = '';
     }
-    if (isFunction(filter) && !filter(node))
-        return;
+
+    if (isFunction(filter) && !filter(node)) return;
+
     const open = new Node({ type: node.type + '.open', value: value });
     unshiftNode(node, open);
+
     return open;
 }
-exports.addOpen = addOpen;
-function addClose(node, Node, value, filter) {
+
+/**
+ * Push a `*.close` node onto `node.nodes`.
+ *
+ * ```js
+ * var Node = require('snapdragon-node');
+ * snapdragon.parser.set('brace', function(node) {
+ *   var match = this.match(/^}/);
+ *   if (match) {
+ *     var parent = this.parent();
+ *     if (parent.type !== 'brace') {
+ *       throw new Error('missing opening: ' + '}');
+ *     }
+ *
+ *     utils.addClose(parent, Node);
+ *     console.log(parent.nodes[parent.nodes.length - 1]):
+ *     // { type: 'brace.close', value: '' };
+ *
+ *     // no need to return a node, since the parent
+ *     // was already added to the AST
+ *     return;
+ *   }
+ * });
+ * ```
+ */
+export function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string | ((node: NodeLike<T>) => boolean), filter?: (node: NodeLike<T>) => boolean) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isFunction(Node), 'expected "Node" to be a constructor function');
+
     if (isFunction(value)) {
         filter = value;
         value = '';
     }
-    if (isFunction(filter) && !filter(node))
-        return;
+
+    if (isFunction(filter) && !filter(node)) return;
+
     const close = new Node({ type: node.type + '.close', value: value });
     pushNode(node, close);
+
     return close;
 }
-exports.addClose = addClose;
+
 /**
  * Wraps the given `node` with `*.open` and `*.close` nodes.
  */
-function wrapNodes(node, Node, filter) {
+export function wrapNodes<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isFunction(Node), 'expected "Node" to be a constructor function');
+
     addOpen(node, Node, filter);
     addClose(node, Node, filter);
+
     return node;
 }
-exports.wrapNodes = wrapNodes;
+
 /**
  * Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
@@ -203,9 +320,10 @@ exports.wrapNodes = wrapNodes;
  * console.log(node.parent.type) // 'foo'
  * ```
  */
-function pushNode(parent, node) {
+export function pushNode<T>(parent: NodeLike<T>, node: NodeLike<T>) {
     assertType(isNode(parent), 'expected "parent" to be an instance of Node');
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (isFunction(parent.push)) {
         return parent.push(node);
     }
@@ -214,12 +332,14 @@ function pushNode(parent, node) {
     }
     else {
         assertType(isFunction(node.define), 'expected "node.define" to be a function');
-        node.define('parent', parent);
+
+        (node as any).define('parent', parent);
         parent.nodes = parent.nodes || [];
+
         return parent.nodes.push(node);
     }
 }
-exports.pushNode = pushNode;
+
 /**
  * Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
@@ -231,9 +351,10 @@ exports.pushNode = pushNode;
  * console.log(node.parent.type) // 'foo'
  * ```
  */
-function unshiftNode(parent, node) {
+export function unshiftNode<T>(parent: NodeLike<T>, node: NodeLike<T>) {
     assertType(isNode(parent), 'expected "parent" to be an instance of Node');
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (isFunction(parent.unshift)) {
         return parent.unshift(node);
     }
@@ -242,12 +363,14 @@ function unshiftNode(parent, node) {
     }
     else {
         assertType(isFunction(node.define), 'expected "node.define" to be a function');
-        node.define('parent', parent);
+
+        (node as any).define('parent', parent);
         parent.nodes = parent.nodes || [];
+
         return parent.nodes.unshift(node);
     }
 }
-exports.unshiftNode = unshiftNode;
+
 /**
  * Pop the last `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
@@ -263,8 +386,9 @@ exports.unshiftNode = unshiftNode;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-function popNode(node) {
+export function popNode<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (isFunction(node.pop)) {
         return node.pop();
     }
@@ -272,7 +396,7 @@ function popNode(node) {
         return node.nodes && node.nodes.pop();
     }
 }
-exports.popNode = popNode;
+
 /**
  * Shift the first `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
@@ -288,8 +412,9 @@ exports.popNode = popNode;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-function shiftNode(node) {
+export function shiftNode<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (isFunction(node.shift)) {
         return node.shift();
     }
@@ -297,7 +422,7 @@ function shiftNode(node) {
         return node.nodes && node.nodes.shift();
     }
 }
-exports.shiftNode = shiftNode;
+
 /**
  * Remove the specified `node` from `parent.nodes`.
  *
@@ -312,10 +437,11 @@ exports.shiftNode = shiftNode;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-function removeNode(parent, node) {
+export function removeNode<T>(parent: NodeLike<T>, node: NodeLike<T>) {
     assertType(isNode(parent), 'expected "parent" to be an instance of Node');
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isArray(parent.nodes) || isUndefined(parent.nodes), 'expected "parent.nodes" to be an array');
+
     if (isFunction(parent.remove)) {
         return parent.remove(node);
     }
@@ -327,7 +453,7 @@ function removeNode(parent, node) {
     }
     return undefined;
 }
-exports.removeNode = removeNode;
+
 /**
  * Returns true if `node.type` matches the given `type`.
  *
@@ -338,16 +464,17 @@ exports.removeNode = removeNode;
  * console.log(utils.isType(node, 'bar')); // true
  * ```
  */
-function isType(node, type) {
+export function isType<T>(node: NodeLike<T>, type: string | RegExp | string[]) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isString(node.type), 'expected "node.type" to be a string');
+
     switch (typeOf(type)) {
         case 'string':
-            return node.type === type;
+            return (node.type as string) === type as string;
         case 'regexp':
-            return type.test(node.type);
+            return (type as RegExp).test(node.type as string);
         case 'array':
-            for (const key of type.slice()) {
+            for (const key of (type as string[]).slice()) {
                 if (isType(node, key)) {
                     return true;
                 }
@@ -358,7 +485,7 @@ function isType(node, type) {
         }
     }
 }
-exports.isType = isType;
+
 /**
  * Returns true if the given `node` has the given `type` in `node.nodes`.
  *
@@ -375,21 +502,22 @@ exports.isType = isType;
  * console.log(utils.hasType(node, 'baz')); // true
  * ```
  */
-function hasType(node, type) {
+export function hasType<T>(node: NodeLike<T>, type: string | RegExp | string[]) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (Array.isArray(node.nodes)) {
         for (const child of node.nodes) {
             if (isType(child, type)) {
                 return true;
             }
         }
-    }
-    else if (!isUndefined(node.nodes)) {
+    } else if (!isUndefined(node.nodes)) {
         throw new TypeError('expected "node.nodes" to be an array');
     }
+
     return false;
 }
-exports.hasType = hasType;
+
 /**
  * Returns the first node from `node.nodes` of the given `type`.
  *
@@ -407,16 +535,18 @@ exports.hasType = hasType;
  * //=> 'abc'
  * ```
  */
-function firstOfType(nodes, type) {
+export function firstOfType<T>(nodes: NodeLike<T>[], type: string | RegExp | string[]) {
     assertType(isArray(nodes), 'expected "nodes" to be an array');
+
     for (const node of nodes) {
         if (isType(node, type)) {
             return node;
         }
     }
+
     return undefined;
 }
-exports.firstOfType = firstOfType;
+
 /**
  * Returns the node at the specified index, or the first node of the
  * given `type` from `node.nodes`.
@@ -439,8 +569,9 @@ exports.firstOfType = firstOfType;
  * //=> 'xyz'
  * ```
  */
-function findNode(nodes, type) {
+export function findNode<T>(nodes: NodeLike<T>[], type: number | string | RegExp | string[]) {
     assertType(isArray(nodes), 'expected "nodes" to be an array');
+
     if (isNumber(type)) {
         return nodes[type];
     }
@@ -448,7 +579,7 @@ function findNode(nodes, type) {
         return firstOfType(nodes, type);
     }
 }
-exports.findNode = findNode;
+
 /**
  * Returns true if the given node is an "*.open" node.
  *
@@ -463,8 +594,9 @@ exports.findNode = findNode;
  * console.log(utils.isOpen(close)); // false
  * ```
  */
-function isOpen(node) {
+export function isOpen<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (node.parent && isFunction(node.parent.isOpen)) {
         return node.parent.isOpen(node);
     }
@@ -473,10 +605,11 @@ function isOpen(node) {
     }
     else {
         assertType(isString(node.type) || isUndefined(node.type), 'expected "node.type" to be a string');
+
         return node.type ? node.type.slice(-5) === '.open' : false;
     }
 }
-exports.isOpen = isOpen;
+
 /**
  * Returns true if the given node is a "*.close" node.
  *
@@ -491,8 +624,9 @@ exports.isOpen = isOpen;
  * console.log(utils.isClose(close)); // true
  * ```
  */
-function isClose(node) {
+export function isClose<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     if (node.parent && isFunction(node.parent.isClose)) {
         return node.parent.isClose(node);
     }
@@ -501,10 +635,11 @@ function isClose(node) {
     }
     else {
         assertType(isString(node.type) || isUndefined(node.type), 'expected "node.type" to be a string');
+
         return node.type ? node.type.slice(-6) === '.close' : false;
     }
 }
-exports.isClose = isClose;
+
 /**
  * Returns true if the given node is an "*.open" node.
  *
@@ -521,9 +656,10 @@ exports.isClose = isClose;
  * console.log(utils.isBlock(brace)); // true
  * ```
  */
-function isBlock(node) {
+export function isBlock<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isArray(node.nodes) || isUndefined(node.nodes), 'expected "node.nodes" to be an array');
+
     if (node.parent && isFunction(node.parent.isBlock)) {
         return node.parent.isBlock(node);
     }
@@ -534,7 +670,7 @@ function isBlock(node) {
         return hasOpenAndClose(node);
     }
 }
-exports.isBlock = isBlock;
+
 /**
  * Returns true if `parent.nodes` has the given `node`.
  *
@@ -546,21 +682,23 @@ exports.isBlock = isBlock;
  * console.log(util.hasNode(foo, bar)); // true
  * ```
  */
-function hasNode(node, child) {
+export function hasNode<T>(node: NodeLike<T>, child: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isNode(child), 'expected "child" to be an instance of Node');
+
     if (isFunction(node.has)) {
         return node.has(child);
     }
     else if (node.nodes) {
         assertType(isArray(node.nodes), 'expected "node.nodes" to be an array');
+
         return node.nodes.indexOf(child) !== -1;
     }
     else {
         return false;
     }
 }
-exports.hasNode = hasNode;
+
 /**
  * Returns true if `node.nodes` **has** an `.open` node
  *
@@ -578,16 +716,20 @@ exports.hasNode = hasNode;
  * console.log(utils.hasOpen(brace)); // true
  * ```
  */
-function hasOpen(node) {
+export function hasOpen<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     let first = node.first || undefined;
+
     if (first === undefined) {
         assertType(isArray(node.nodes) || isUndefined(node.nodes), 'expected "node.nodes" to be an array');
+
         first = node.nodes ? node.nodes[0] : undefined;
-        if (first === undefined)
-            return false;
+        if (first === undefined) return false;
     }
+
     assertType(isNode(first), 'expected "first" to be an instance of Node');
+
     if (isFunction(node.isOpen)) {
         return node.isOpen(first);
     }
@@ -595,7 +737,7 @@ function hasOpen(node) {
         return first.type === `${node.type}.open`;
     }
 }
-exports.hasOpen = hasOpen;
+
 /**
  * Returns true if `node.nodes` **has** a `.close` node
  *
@@ -613,19 +755,24 @@ exports.hasOpen = hasOpen;
  * console.log(utils.hasClose(brace)); // true
  * ```
  */
-function hasClose(node) {
+export function hasClose<T>(node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
+
     let last = node.last || undefined;
+
     if (last === undefined) {
         assertType(isArray(node.nodes) || isUndefined(node.nodes), 'expected "node.nodes" to be an array');
+
         if (node.nodes) {
             const length = node.nodes.length;
             last = length > 0 ? node.nodes[length - 1] : undefined;
         }
-        if (last === undefined)
-            return false;
+
+        if (last === undefined) return false;
     }
+
     assertType(isNode(last), 'expected "first" to be an instance of Node');
+
     if (isFunction(node.isClose)) {
         return node.isClose(last);
     }
@@ -633,7 +780,7 @@ function hasClose(node) {
         return last.type === `${node.type}.close`;
     }
 }
-exports.hasClose = hasClose;
+
 /**
  * Returns true if `node.nodes` has both `.open` and `.close` nodes
  *
@@ -655,10 +802,10 @@ exports.hasClose = hasClose;
  * console.log(utils.hasClose(brace)); // true
  * ```
  */
-function hasOpenAndClose(node) {
+export function hasOpenAndClose<T>(node: NodeLike<T>) {
     return hasOpen(node) && hasClose(node);
 }
-exports.hasOpenAndClose = hasOpenAndClose;
+
 /**
  * Push the given `node` onto the `state.inside` array for the
  * given type. This array is used as a specialized "stack" for
@@ -672,31 +819,36 @@ exports.hasOpenAndClose = hasOpenAndClose;
  * //=> { brace: [{type: 'brace'}] }
  * ```
  */
-function addType(state, node) {
+export function addType<T>(state: StateLike<T>, node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isObject(state), 'expected "state" to be an object');
-    let type = undefined;
+
+    let type: string | undefined = undefined;
+
     if (node.parent) {
         assertType(isNode(node.parent), 'expected "node.parent" to be an instance of Node');
         assertType(isString(node.parent.type), 'expected "node.parent.type" to be a string');
+
         type = node.parent.type;
     }
     else {
         assertType(isString(node.type), 'expected "node.type" to be a string');
-        type = node.type.replace(/\.open$/, '');
+
+        type = (node.type as string).replace(/\.open$/, '');
     }
+
     if (!state.hasOwnProperty('inside')) {
         state.inside = {};
     }
-    if (!state.inside.hasOwnProperty(type)) {
-        state.inside[type] = [];
+    if (!(state.inside as any).hasOwnProperty(type as string)) {
+        (state.inside as any)[type as string] = [];
     }
-    const arr = state.inside[type];
+
+    const arr = (state.inside as any)[type as string] as NodeLike<T>[];
     arr.push(node);
     return arr;
-}
-exports.addType = addType;
-;
+};
+
 /**
  * Remove the given `node` from the `state.inside` array for the
  * given type. This array is used as a specialized "stack" for
@@ -712,27 +864,33 @@ exports.addType = addType;
  * //=> { brace: [] }
  * ```
  */
-function removeType(state, node) {
+export function removeType<T>(state: StateLike<T>, node: NodeLike<T>) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isObject(state), 'expected "state" to be an object');
     assertType(isObject(state.inside), 'expected "state.inside" to be an object');
-    let type = undefined;
+
+    let type: string | undefined = undefined;
+
     if (node.parent) {
         assertType(isNode(node.parent), 'expected "node.parent" to be an instance of Node');
         assertType(isString(node.parent.type), 'expected "node.parent.type" to be a string');
+
         type = node.parent.type;
     }
     else {
         assertType(isString(node.type), 'expected "node.type" to be a string');
-        type = node.type.replace(/\.open$/, '');
+
+        type = (node.type as string).replace(/\.open$/, '');
     }
+
     assertType(isObject(state.inside), 'expected "state.inside" to be an object');
-    if (state.inside.hasOwnProperty(type)) {
-        return state.inside[type].pop();
+
+    if ((state.inside as any).hasOwnProperty(type)) {
+        return ((state.inside as any)[type as string] as NodeLike<T>[]).pop();
     }
+
     return undefined;
 }
-exports.removeType = removeType;
 /**
  * Returns true if `node.value` is an empty string, or `node.nodes` does
  * not contain any non-empty text nodes.
@@ -744,9 +902,10 @@ exports.removeType = removeType;
  * utils.isEmpty(node); //=> false
  * ```
  */
-function isEmpty(node, fn) {
+export function isEmpty<T>(node: NodeLike<T>, fn?: (node: NodeLike<T>) => boolean) {
     assertType(isNode(node), 'expected node to be an instance of Node');
     assertType(isArray(node.nodes) || isUndefined(node.nodes), 'expected "node.nodes" to be an array');
+
     if (Array.isArray(node.nodes)) {
         for (const child of node.nodes) {
             if (!isEmpty(child, fn)) {
@@ -762,7 +921,7 @@ function isEmpty(node, fn) {
         return !value(node);
     }
 }
-exports.isEmpty = isEmpty;
+
 /**
  * Returns true if the `state.inside` stack for the given type exists
  * and has one or more nodes on it.
@@ -777,17 +936,19 @@ exports.isEmpty = isEmpty;
  * console.log(utils.isInsideType(state, 'brace')); //=> false
  * ```
  */
-function isInsideType(state, type) {
+export function isInsideType<T>(state: StateLike<T>, type: string) {
     assertType(isObject(state), 'expected "state" to be an object');
     assertType(isString(type), 'expected "type" to be a string');
+
     if (state.hasOwnProperty('inside')) {
-        if (state.inside.hasOwnProperty(type)) {
-            return state.inside[type].length > 0;
+        if ((state.inside as any).hasOwnProperty(type)) {
+            return (state.inside as any)[type].length > 0;
         }
     }
+
     return false;
 }
-exports.isInsideType = isInsideType;
+
 /**
  * Returns true if `node` is either a child or grand-child of the given `type`,
  * or `state.inside[type]` is a non-empty array.
@@ -801,35 +962,43 @@ exports.isInsideType = isInsideType;
  * console.log(utils.isInside(state, open, 'brace')); //=> true
  * ```
  */
-function isInside(state, node, type) {
+export function isInside<T>(state: StateLike<T>, node: NodeLike<T>, type: string | RegExp | string[]) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
     assertType(isObject(state), 'expected "state" to be an object');
+
     switch (typeOf(type)) {
         case 'string': {
             assertType(isUndefined(node.parent) || isNode(node.parent), 'expected "node.parent" to be an instance of Node');
-            return (node.parent && node.parent.type === type) || isInsideType(state, type);
+
+            return (node.parent && node.parent.type === type) || isInsideType(state, type as string);
         }
         case 'regexp': {
             assertType(isUndefined(node.parent) || isNode(node.parent), 'expected "node.parent" to be an instance of Node');
+
             const parent = node.parent;
+
             if (parent && parent.type) {
                 assertType(isString(parent.type), 'expected "node.parent.type" to be a string');
-                if (type.test(parent.type)) {
+
+                if ((type as RegExp).test(parent.type)) {
                     return true;
                 }
             }
+
             assertType(isObject(state.inside), 'expected "state.inside" to be an object');
-            const keys = Object.keys(state.inside);
+
+            const keys = Object.keys(state.inside as any);
             for (const key of keys) {
-                const value = state.inside[key];
-                if (isArray(value) && value.length !== 0 && type.test(key)) {
+                const value = (state.inside as any)[key];
+
+                if (isArray(value) && value.length !== 0 && (type as RegExp).test(key)) {
                     return true;
                 }
             }
             return false;
         }
         case 'array': {
-            for (const child of type) {
+            for (const child of (type as string[])) {
                 if (isInside(state, node, child)) {
                     return true;
                 }
@@ -841,22 +1010,22 @@ function isInside(state, node, type) {
         }
     }
 }
-exports.isInside = isInside;
+
 /**
  * Get the last `n` element from the given `array`. Used for getting
  * a node from `node.nodes`.
  */
-function last(arr, n) {
+export function last<T>(arr: T, n?: number) {
     return isArray(arr) ? arr[arr.length - (n || 1)] : undefined;
 }
-exports.last = last;
+
 /**
  * Get the last node from `node.nodes`.
  */
-function lastNode(node) {
-    return isArray(node.nodes) ? last(node.nodes) : undefined;
+export function lastNode<T>(node: NodeLike<T>): NodeLike<T> | undefined {
+    return isArray(node.nodes) ? last<NodeLike<T>[]>(node.nodes) : undefined;
 }
-exports.lastNode = lastNode;
+
 /**
  * Cast the given `value` to an array.
  *
@@ -869,84 +1038,99 @@ exports.lastNode = lastNode;
  * //=> ['foo']
  * ```
  */
-function arrayify(value) {
+export function arrayify<T>(value: T) {
     if (isString(value) && value !== '') {
-        return [value];
+        return [value as string];
     }
     else if (!isArray(value)) {
         return [];
     }
     else {
-        return value;
+        return value as T;
     }
 }
-exports.arrayify = arrayify;
+
 /**
  * Convert the given `value` to a string by joining with `,`. Useful
  * for creating a cheerio/CSS/DOM-style selector from a list of strings.
  */
-function stringify(value) {
-    return arrayify(value).join(',');
+export function stringify<T>(value: T) {
+    return (arrayify(value) as string[]).join(',');
 }
-exports.stringify = stringify;
+
 /**
  * Ensure that the given value is a string and call `.trim()` on it,
  * or return an empty string.
  */
-function trim(str) {
+export function trim(str: string) {
     return isString(str) ? str.trim() : '';
 }
-exports.trim = trim;
+
 /**
  * Return true if value is an object
  */
-function isObject(value) {
+
+function isObject(value: any): value is object {
     return typeOf(value) === 'object';
 }
+
 /**
  * Return true if value is a string
  */
-function isString(value) {
+
+function isString(value: any): value is string {
     return typeof value === 'string';
 }
+
 /**
  * Return true if value is a number
  */
-function isNumber(value) {
+
+function isNumber(value: any): value is number {
     return typeof value === 'number';
 }
+
 /**
  * Return true if value is a function
  */
-function isFunction(value) {
+
+function isFunction(value: any): value is Function {
     return typeof value === 'function';
 }
+
 /**
  * Return true if value is undefined
  */
-function isUndefined(value) {
+
+function isUndefined(value: any): value is undefined {
     return value === undefined;
 }
+
 /**
  * Return true if value is an array
  */
-function isArray(value) {
+
+function isArray<T>(value: T): value is Array<T> & T {
     return Array.isArray(value);
 }
+
 /**
  * Shim to ensure the `.append` methods work with any version of snapdragon
  */
-function appendToCompiler(compiler, value, node) {
+
+function appendToCompiler<T>(compiler: CompilerLike<T>, value: string, node: NodeLike<T>) {
     if (typeof compiler.append !== 'function') {
         assertType(isFunction(compiler.emit), 'expected "compiler.emit" to be a function');
-        return compiler.emit(value, node);
+
+        return (compiler as any).emit(value, node);
     }
     return compiler.append(value, node);
 }
+
 /**
  * Simplified assertion. Throws an error is `value` is falsey.
  */
-function assertType(value, message) {
-    if (!value)
-        throw new TypeError(message);
+
+function assertType(value: boolean, message: string) {
+    if (!value) throw new TypeError(message);
 }

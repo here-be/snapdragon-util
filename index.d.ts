@@ -2,188 +2,97 @@
  * An interface that describes what structure is expected from Snapdragon's Node.
  */
 export interface NodeLike<T> {
-    /**
-     * Property that is always present and true in Node.
-     */
-    readonly isNode: true;
-
-    /**
-     * `[Optional]` Value property.
-     */
+    isNode?: boolean;
     value?: string;
-
-    /**
-     * `[Optional | Legacy]` Value property.
-     */
     val?: string;
-
-    /**
-     * `[Optional]` Node's children.
-     */
-    nodes?: NodeLike<T>[];
-
-    /**
-     * `[Optional]` Parent node.
-     */
-    parent?: NodeLike<T>;
-
-    /**
-     * `[Optional]` Type property.
-     */
     type?: string;
-
-    /**
-     * `[Optional]` Unshift node to children node array (`this.nodes`).
-     */
-    unshift?: (node: NodeLike<T>) => number;
-
-    /**
-     * `[Optional]` Unshift node to children node array (`this.nodes`).
-     */
-    //TODO: Is this a legacy? Should it be removed?
-    unshiftNode?: (node: NodeLike<T>) => number;
-
-    /**
-     * `[Optional]` Push node to children node array (`this.nodes`).
-     */
+    parent?: NodeLike<T>;
+    nodes?: NodeLike<T>[];
     push?: (node: NodeLike<T>) => number;
-
-    /**
-     * `[Optional]` Push node to children node array (`this.nodes`).
-     */
-    //TODO: Is this a legacy? Should it be removed?
     pushNode?: (node: NodeLike<T>) => number;
-
-    /**
-     * `[Optional]` Pop node from children node array (`this.nodes`).
-     */
+    unshift?: (node: NodeLike<T>) => number;
+    unshiftNode?: (node: NodeLike<T>) => number;
     pop?: () => NodeLike<T> | undefined;
-
-    /**
-     * `[Optional]` Shift node from children node array (`this.nodes`).
-     */
     shift?: () => NodeLike<T> | undefined;
-
-    /**
-     * `[Optional]` Shift node from children node array (`this.nodes`).
-     */
-    remove?: (node: NodeLike<T>) => NodeLike<T>[] | null;
-
-    /**
-     * `[Optional]` Returns true if type matches `*.open` pattern.
-     */
-    //TODO: Check `utils.isOpen`.
-    isOpen?: () => boolean;
-
-    /**
-     * `[Optional]` Returns true if type matches `*.close` pattern.
-     */
-    //TODO: Check `utils.isClose`.
-    isClose?: () => boolean;
-
-    /**
-     * `[Optional]` Returns true if node is block.
-     */
-    //TODO: Check `utils.isBlock`.
-    isBlock?: () => boolean;
-
-    /**
-     * `[Optional]` Returns true if `node` exists in `this.nodes`.
-     */
+    define?: <K extends string, V>(name: K, val: V) => (this & {
+        [key in K]: V;
+    });
+    remove?: (node: NodeLike<T>) => NodeLike<T> | undefined;
+    isOpen?: (node: NodeLike<T>) => boolean;
+    isClose?: (node: NodeLike<T>) => boolean;
+    isBlock?: (node: NodeLike<T>) => boolean;
     has?: (node: NodeLike<T>) => boolean;
-
-    /**
-     * `[Optional]` Getter that returns first child node.
-     */
-    readonly first?: NodeLike<T> | null;
-
-    /**
-     * `[Optional]` Getter that returns last child node.
-     */
-    readonly last?: NodeLike<T> | null;
+    readonly first?: NodeLike<T>;
+    readonly last?: NodeLike<T>;
 }
-
 /**
  * An interface that describes what constructor is expected from Snapdragon's Node.
  */
 export interface NodeLikeConstructor<T> {
-    new(value: object, parent?: NodeLike<T>): NodeLike<T>;
-    new(value: string, type: string, parent?: NodeLike<T>): NodeLike<T>;
+    new (value: object, parent?: NodeLike<T>): NodeLike<T>;
+    new (value: string, type: string, parent?: NodeLike<T>): NodeLike<T>;
 }
-
+/**
+ * An interface that describes what structure is expected from Snapdragon's Compiler.
+ */
+export interface CompilerLike<T> {
+    append?: (value: string, node: NodeLike<T>) => any | undefined;
+    emit?: (value: string, node: NodeLike<T>) => any | undefined;
+}
 /**
  * An interface that describes what object structure should be expected for State object.
  */
 export interface StateLike<T> {
     inside?: {
-        [type: string]: NodeLike<T>[]
-    }
+        [type: string]: NodeLike<T>[];
+    };
 }
-
-/**
- * An interface that describes what object structure must be for State object.
- */
-export interface State<T> {
-    inside: {
-        [type: string]: NodeLike<T>[]
-    }
-}
-
 /**
  * Returns true if the given value is a node.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
- * var node = new Node({type: 'foo'});
+ * ```js
+ * const Node = require('snapdragon-node');
+ * const node = new Node({type: 'foo'});
  * console.log(utils.isNode(node)); //=> true
  * console.log(utils.isNode({})); //=> false
  * ```
  */
-
-export function isNode<T>(node: T): node is NodeLike<T> & T;
-
+export declare function isNode<T>(node: T): node is NodeLike<T> & T;
 /**
  * Emit an empty string for the given `node`.
  *
- * ```ts
+ * ```js
  * // do nothing for beginning-of-string
  * snapdragon.compiler.set('bos', utils.noop);
  * ```
  */
-
-export function noop<T>(node: NodeLike<T>): void;
-
+export declare function noop<T>(this: CompilerLike<T>, node: NodeLike<T>): void;
 /**
  * Returns `node.value` or `node.val`.
  *
- * ```ts
+ * ```js
  * const star = new Node({type: 'star', value: '*'});
  * const slash = new Node({type: 'slash', val: '/'});
  * console.log(utils.value(star)) //=> '*'
  * console.log(utils.value(slash)) //=> '/'
  * ```
  */
-
-//TODO: It is possible to get an undefined value. Is it supposed to be this way?
-export function value<T>(node: NodeLike<T>): string | undefined;
-
+export declare function value<T>(node: NodeLike<T>): string | undefined;
 /**
  * Append `node.value` to `compiler.output`.
  *
- * ```ts
+ * ```js
  * snapdragon.compiler.set('text', utils.identity);
  * ```
  */
-
-export function identity<T>(node: NodeLike<T>): void;
-
+export declare function identity<T>(this: CompilerLike<T>, node: NodeLike<T>): void;
 /**
  * Previously named `.emit`, this method appends the given `value`
  * to `compiler.output` for the given node. Useful when you know
- * what value should be appended in advance, regardless of the actual
+ * what value should be appended advance, regardless of the actual
  * value of `node.value`.
  *
- * ```ts
+ * ```js
  * snapdragon.compiler
  *   .set('i', function(node) {
  *     this.mapVisit(node);
@@ -192,9 +101,7 @@ export function identity<T>(node: NodeLike<T>): void;
  *   .set('i.close', utils.append('</i>'))
  * ```
  */
-
-export function append<T>(value: string): (node: NodeLike<T>) => void;
-
+export declare function append(value: string): <T>(this: CompilerLike<T>, node: NodeLike<T>) => void;
 /**
  * Used in compiler middleware, this converts an AST node into
  * an empty `text` node and deletes `node.nodes` if it exists.
@@ -202,52 +109,48 @@ export function append<T>(value: string): (node: NodeLike<T>) => void;
  * removing the node, indices will not need to be re-calculated
  * in sibling nodes, and nothing is appended to the output.
  *
- * ```ts
+ * ```js
  * utils.toNoop(node);
  * // convert `node.nodes` to the given value instead of deleting it
  * utils.toNoop(node, []);
  * ```
  */
-
-export function toNoop<T>(node: NodeLike<T>, nodes?: NodeLike<T>[]): void;
-
+export declare function toNoop<T>(node: NodeLike<T>, nodes?: Array<NodeLike<T>>): void;
 /**
  * Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon
  * automatically calls registered compilers, this allows you to pass a visitor
  * function.
  *
- * ```ts
+ * ```js
  * snapdragon.compiler.set('i', function(node) {
  *   utils.visit(node, function(childNode) {
  *     // do stuff with "childNode"
+ *     return childNode;
  *   });
  * });
  * ```
  */
-
-export function visit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void): NodeLike<T>;
-
+export declare function visit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void): NodeLike<T>;
 /**
  * Map [visit](#visit) the given `fn` over `node.nodes`. This is called by
  * [visit](#visit), use this method if you do not want `fn` to be called on
  * the first node.
  *
- * ```ts
+ * ```js
  * snapdragon.compiler.set('i', function(node) {
  *   utils.mapVisit(node, function(childNode) {
  *     // do stuff with "childNode"
+ *     return childNode;
  *   });
  * });
  * ```
  */
-
-export function mapVisit<T>(node: NodeLike<T>, fn: NodeLike<T>): NodeLike<T>;
-
+export declare function mapVisit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void): NodeLike<T>;
 /**
  * Unshift an `*.open` node onto `node.nodes`.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * snapdragon.parser.set('brace', function(node) {
  *   var match = this.match(/^{/);
  *   if (match) {
@@ -265,19 +168,13 @@ export function mapVisit<T>(node: NodeLike<T>, fn: NodeLike<T>): NodeLike<T>;
  * });
  * ```
  */
-
-export function addOpen<T>(
-    node: NodeLike<T>,
-    Node: NodeLikeConstructor<T>,
-    value: string | ((node: NodeLike<T>) => boolean),
-    filter?: (node: NodeLike<T>) => boolean
-): NodeLike<T> | undefined;
-
+export declare function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export declare function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
 /**
  * Push a `*.close` node onto `node.nodes`.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * snapdragon.parser.set('brace', function(node) {
  *   var match = this.match(/^}/);
  *   if (match) {
@@ -297,23 +194,16 @@ export function addOpen<T>(
  * });
  * ```
  */
-
-export function addClose<T>(node: NodeLike<T>,
-    Node: NodeLikeConstructor<T>,
-    value: string | ((node: NodeLike<T>) => boolean),
-    filter?: (node: NodeLike<T>) => boolean
-): NodeLike<T> | undefined;
-
+export declare function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export declare function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
 /**
  * Wraps the given `node` with `*.open` and `*.close` nodes.
  */
-
-export function wrapNodes<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter: (node: NodeLike<T>) => boolean): NodeLike<T>;
-
+export declare function wrapNodes<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
 /**
  * Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
- * ```ts
+ * ```js
  * var parent = new Node({type: 'foo'});
  * var node = new Node({type: 'bar'});
  * utils.pushNode(parent, node);
@@ -321,14 +211,11 @@ export function wrapNodes<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, fi
  * console.log(node.parent.type) // 'foo'
  * ```
  */
-
-//TODO: What should really return? A bug maybe? Also, should it return undefined? Can we not throw an error?
-export function pushNode<T>(parent: NodeLike<T>, node: NodeLike<T>): NodeLike<T> | number | undefined;
-
+export declare function pushNode<T>(parent: NodeLike<T>, node: NodeLike<T>): number;
 /**
  * Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
- * ```ts
+ * ```js
  * var parent = new Node({type: 'foo'});
  * var node = new Node({type: 'bar'});
  * utils.unshiftNode(parent, node);
@@ -336,16 +223,13 @@ export function pushNode<T>(parent: NodeLike<T>, node: NodeLike<T>): NodeLike<T>
  * console.log(node.parent.type) // 'foo'
  * ```
  */
-
-//TODO: What should really return? See `pushNode` + missing return?
-export function unshiftNode<T>(parent: NodeLike<T>, node: NodeLike<T>): number | undefined;
-
+export declare function unshiftNode<T>(parent: NodeLike<T>, node: NodeLike<T>): number;
 /**
  * Pop the last `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
  * with any version of `snapdragon-node`.
  *
- * ```ts
+ * ```js
  * var parent = new Node({type: 'foo'});
  * utils.pushNode(parent, new Node({type: 'foo'}));
  * utils.pushNode(parent, new Node({type: 'bar'}));
@@ -355,15 +239,13 @@ export function unshiftNode<T>(parent: NodeLike<T>, node: NodeLike<T>): number |
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-
-export function popNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
-
+export declare function popNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
 /**
  * Shift the first `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
  * with any version of `snapdragon-node`.
  *
- * ```ts
+ * ```js
  * var parent = new Node({type: 'foo'});
  * utils.pushNode(parent, new Node({type: 'foo'}));
  * utils.pushNode(parent, new Node({type: 'bar'}));
@@ -373,13 +255,11 @@ export function popNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-
-export function shiftNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
-
+export declare function shiftNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
 /**
  * Remove the specified `node` from `parent.nodes`.
  *
- * ```ts
+ * ```js
  * var parent = new Node({type: 'abc'});
  * var foo = new Node({type: 'foo'});
  * utils.pushNode(parent, foo);
@@ -390,30 +270,23 @@ export function shiftNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-
-//TODO: Same as `NodeLike<T>.remove` method. We should return empty array instead of undefined and null?
-export function removeNode<T>(parent: NodeLike<T>, node: NodeLike<T>): NodeLike<T>[] | null | undefined;
-
+export declare function removeNode<T>(parent: NodeLike<T>, node: NodeLike<T>): NodeLike<T> | undefined;
 /**
- * Returns true if `node.type` matches the given `type`. Throws a
- * `TypeError` if `node` is not an instance of `Node`.
+ * Returns true if `node.type` matches the given `type`.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var node = new Node({type: 'foo'});
  * console.log(utils.isType(node, 'foo')); // false
  * console.log(utils.isType(node, 'bar')); // true
  * ```
  */
-
-export function isType<T>(node: NodeLike<T>, type: string): boolean
-
+export declare function isType<T>(node: NodeLike<T>, type: string | RegExp | string[]): boolean;
 /**
  * Returns true if the given `node` has the given `type` in `node.nodes`.
- * Throws a `TypeError` if `node` is not an instance of `Node`.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var node = new Node({
  *   type: 'foo',
  *   nodes: [
@@ -425,13 +298,11 @@ export function isType<T>(node: NodeLike<T>, type: string): boolean
  * console.log(utils.hasType(node, 'baz')); // true
  * ```
  */
-
-export function hasType<T>(node: NodeLike<T>, type: string): boolean;
-
+export declare function hasType<T>(node: NodeLike<T>, type: string | RegExp | string[]): boolean;
 /**
- * Returns the first node from `node.nodes` of the given `type`
+ * Returns the first node from `node.nodes` of the given `type`.
  *
- * ```ts
+ * ```js
  * var node = new Node({
  *   type: 'foo',
  *   nodes: [
@@ -445,14 +316,12 @@ export function hasType<T>(node: NodeLike<T>, type: string): boolean;
  * //=> 'abc'
  * ```
  */
-
-export function firstOfType<T>(nodes: NodeLike<T>[], type: string): NodeLike<T> | undefined;
-
+export declare function firstOfType<T>(nodes: NodeLike<T>[], type: string | RegExp | string[]): NodeLike<T> | undefined;
 /**
  * Returns the node at the specified index, or the first node of the
  * given `type` from `node.nodes`.
  *
- * ```ts
+ * ```js
  * var node = new Node({
  *   type: 'foo',
  *   nodes: [
@@ -470,14 +339,12 @@ export function firstOfType<T>(nodes: NodeLike<T>[], type: string): NodeLike<T> 
  * //=> 'xyz'
  * ```
  */
-
-export function findNode<T>(nodes: NodeLike<T>[], type: string | number): NodeLike<T> | undefined;
-
+export declare function findNode<T>(nodes: NodeLike<T>[], type: number | string | RegExp | string[]): NodeLike<T> | undefined;
 /**
  * Returns true if the given node is an "*.open" node.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var brace = new Node({type: 'brace'});
  * var open = new Node({type: 'brace.open'});
  * var close = new Node({type: 'brace.close'});
@@ -487,15 +354,12 @@ export function findNode<T>(nodes: NodeLike<T>[], type: string | number): NodeLi
  * console.log(utils.isOpen(close)); // false
  * ```
  */
-
-//TODO: Why does `node.isOpen` and `node.parent.isOpen` method requires `node`? It makes no sense? Why is parent even checked at all?
-export function isOpen<T>(node: NodeLike<T>): boolean;
-
+export declare function isOpen<T>(node: NodeLike<T>): boolean;
 /**
  * Returns true if the given node is a "*.close" node.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var brace = new Node({type: 'brace'});
  * var open = new Node({type: 'brace.open'});
  * var close = new Node({type: 'brace.close'});
@@ -505,15 +369,12 @@ export function isOpen<T>(node: NodeLike<T>): boolean;
  * console.log(utils.isClose(close)); // true
  * ```
  */
-
-//TODO: Why does `node.isClose` and `node.parent.isClose` method requires `node`? It makes no sense? Why is parent even checked at all?
-export function isClose<T>(node: NodeLike<T>): boolean;
-
+export declare function isClose<T>(node: NodeLike<T>): boolean;
 /**
  * Returns true if the given node is an "*.open" node.
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var brace = new Node({type: 'brace'});
  * var open = new Node({type: 'brace.open', value: '{'});
  * var inner = new Node({type: 'text', value: 'a,b,c'});
@@ -525,30 +386,24 @@ export function isClose<T>(node: NodeLike<T>): boolean;
  * console.log(utils.isBlock(brace)); // true
  * ```
  */
-
-//TODO: Why does `node.isBlock` and `node.parent.isBlock` method requires `node`? It makes no sense? Why is parent even checked at all?
-export function isBlock<T>(node: NodeLike<T>): boolean;
-
+export declare function isBlock<T>(node: NodeLike<T>): boolean;
 /**
  * Returns true if `parent.nodes` has the given `node`.
  *
- * ```ts
+ * ```js
  * const foo = new Node({type: 'foo'});
  * const bar = new Node({type: 'bar'});
- * cosole.log(util.hasNode(foo, bar)); // false
+ * console.log(util.hasNode(foo, bar)); // false
  * foo.push(bar);
- * cosole.log(util.hasNode(foo, bar)); // true
+ * console.log(util.hasNode(foo, bar)); // true
  * ```
  */
-
-//TODO: Why does `node.isBlock` and `node.parent.isBlock` method requires `node`? It makes no sense? Why is parent even checked at all?
-export function hasNode<T>(node: NodeLike<T>, child: NodeLike<T>): boolean;
-
+export declare function hasNode<T>(node: NodeLike<T>, child: NodeLike<T>): boolean;
 /**
  * Returns true if `node.nodes` **has** an `.open` node
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var brace = new Node({
  *   type: 'brace',
  *   nodes: []
@@ -561,15 +416,12 @@ export function hasNode<T>(node: NodeLike<T>, child: NodeLike<T>): boolean;
  * console.log(utils.hasOpen(brace)); // true
  * ```
  */
-
-//TODO: Same as `util.isOpen`
-export function hasOpen<T>(node: NodeLike<T>): boolean;
-
+export declare function hasOpen<T>(node: NodeLike<T>): boolean;
 /**
  * Returns true if `node.nodes` **has** a `.close` node
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var brace = new Node({
  *   type: 'brace',
  *   nodes: []
@@ -582,15 +434,12 @@ export function hasOpen<T>(node: NodeLike<T>): boolean;
  * console.log(utils.hasClose(brace)); // true
  * ```
  */
-
-//TODO: Same as `util.isClose`
-export function hasClose<T>(node: NodeLike<T>): boolean;
-
+export declare function hasClose<T>(node: NodeLike<T>): boolean;
 /**
  * Returns true if `node.nodes` has both `.open` and `.close` nodes
  *
- * ```ts
- * import * as Node from 'snapdragon-node';
+ * ```js
+ * var Node = require('snapdragon-node');
  * var brace = new Node({
  *   type: 'brace',
  *   nodes: []
@@ -607,15 +456,13 @@ export function hasClose<T>(node: NodeLike<T>): boolean;
  * console.log(utils.hasClose(brace)); // true
  * ```
  */
-
-export function hasOpenAndClose<T>(node: NodeLike<T>): boolean;
-
+export declare function hasOpenAndClose<T>(node: NodeLike<T>): boolean;
 /**
  * Push the given `node` onto the `state.inside` array for the
  * given type. This array is used as a specialized "stack" for
  * only the given `node.type`.
  *
- * ```ts
+ * ```js
  * var state = { inside: {}};
  * var node = new Node({type: 'brace'});
  * utils.addType(state, node);
@@ -623,16 +470,13 @@ export function hasOpenAndClose<T>(node: NodeLike<T>): boolean;
  * //=> { brace: [{type: 'brace'}] }
  * ```
  */
-
-
-export function addType<T>(state: StateLike<T>, node: NodeLike<T>): NodeLike<T>[];
-
+export declare function addType<T>(state: StateLike<T>, node: NodeLike<T>): NodeLike<T>[];
 /**
  * Remove the given `node` from the `state.inside` array for the
  * given type. This array is used as a specialized "stack" for
  * only the given `node.type`.
  *
- * ```ts
+ * ```js
  * var state = { inside: {}};
  * var node = new Node({type: 'brace'});
  * utils.addType(state, node);
@@ -642,29 +486,24 @@ export function addType<T>(state: StateLike<T>, node: NodeLike<T>): NodeLike<T>[
  * //=> { brace: [] }
  * ```
  */
-
-//What should it really return? It's also possible that `inside` is not defined.
-export function removeType<T>(state: State<T>, node: NodeLike<T>): NodeLike<T> | undefined;
-
+export declare function removeType<T>(state: StateLike<T>, node: NodeLike<T>): NodeLike<T> | undefined;
 /**
  * Returns true if `node.value` is an empty string, or `node.nodes` does
  * not contain any non-empty text nodes.
  *
- * ```ts
+ * ```js
  * var node = new Node({type: 'text'});
  * utils.isEmpty(node); //=> true
  * node.value = 'foo';
  * utils.isEmpty(node); //=> false
  * ```
  */
-
-export function isEmpty<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => boolean): boolean;
-
+export declare function isEmpty<T>(node: NodeLike<T>, fn?: (node: NodeLike<T>) => boolean): boolean;
 /**
  * Returns true if the `state.inside` stack for the given type exists
  * and has one or more nodes on it.
  *
- * ```ts
+ * ```js
  * var state = { inside: {}};
  * var node = new Node({type: 'brace'});
  * console.log(utils.isInsideType(state, 'brace')); //=> false
@@ -674,14 +513,12 @@ export function isEmpty<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => boolean
  * console.log(utils.isInsideType(state, 'brace')); //=> false
  * ```
  */
-
-export function isInsideType<T>(state: StateLike<T>, type: string): boolean;
-
+export declare function isInsideType<T>(state: StateLike<T>, type: string): boolean;
 /**
  * Returns true if `node` is either a child or grand-child of the given `type`,
  * or `state.inside[type]` is a non-empty array.
  *
- * ```ts
+ * ```js
  * var state = { inside: {}};
  * var node = new Node({type: 'brace'});
  * var open = new Node({type: 'brace.open'});
@@ -690,28 +527,20 @@ export function isInsideType<T>(state: StateLike<T>, type: string): boolean;
  * console.log(utils.isInside(state, open, 'brace')); //=> true
  * ```
  */
-
-//TODO: `state.inside` can be undefined.
-export function isInside<T>(state: State<T>, node: NodeLike<T>, type: string): boolean;
-
+export declare function isInside<T>(state: StateLike<T>, node: NodeLike<T>, type: string | RegExp | string[]): boolean;
 /**
- * Get the last `n` element from the given `array`.
+ * Get the last `n` element from the given `array`. Used for getting
+ * a node from `node.nodes`.
  */
-
-//TODO: Can be undefined and null?
-export function last<T>(arr: Array<T>, n: number): T | undefined | null;
-
+export declare function last<T>(arr: T, n?: number): T | undefined;
 /**
- * Get the last node from `node.nodes.`
+ * Get the last node from `node.nodes`.
  */
-
-//TODO: Can be undefined and null?
-export function lastNode<T>(node: NodeLike<T>): NodeLike<T> | undefined | null;
-
+export declare function lastNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
 /**
  * Cast the given `value` to an array.
  *
- * ```ts
+ * ```js
  * console.log(utils.arrayify(''));
  * //=> []
  * console.log(utils.arrayify('foo'));
@@ -720,19 +549,14 @@ export function lastNode<T>(node: NodeLike<T>): NodeLike<T> | undefined | null;
  * //=> ['foo']
  * ```
  */
-
-export function arrayify<T>(value: T | T[]): T[];
-
+export declare function arrayify<T>(value: T): string[] | T;
 /**
  * Convert the given `value` to a string by joining with `,`. Useful
  * for creating a cheerio/CSS/DOM-style selector from a list of strings.
  */
-
-export function stringify(value: any): string;
-
+export declare function stringify<T>(value: T): string;
 /**
  * Ensure that the given value is a string and call `.trim()` on it,
  * or return an empty string.
  */
-
-export function trim(str: string): string;
+export declare function trim(str: string): string;
