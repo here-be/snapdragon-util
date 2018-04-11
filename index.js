@@ -594,7 +594,7 @@ function hasOpen(node) {
         return node.isOpen(first);
     }
     else {
-        return node.type === `${node.type}.open`;
+        return first.type === `${node.type}.open`;
     }
 }
 exports.hasOpen = hasOpen;
@@ -632,7 +632,7 @@ function hasClose(node) {
         return node.isClose(last);
     }
     else {
-        return node.type === `${node.type}.close`;
+        return last.type === `${node.type}.close`;
     }
 }
 exports.hasClose = hasClose;

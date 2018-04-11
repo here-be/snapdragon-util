@@ -734,7 +734,7 @@ export function hasOpen(node: NodeLike) {
         return node.isOpen(first);
     }
     else {
-        return (node as any).type === `${(node as any).type}.open`;
+        return (first as any).type === `${(node as any).type}.open`;
     }
 }
 
@@ -777,7 +777,7 @@ export function hasClose(node: NodeLike) {
         return node.isClose(last);
     }
     else {
-        return (node as any).type === `${(node as any).type}.close`;
+        return (last as any).type === `${(node as any).type}.close`;
     }
 }
 
