@@ -53,7 +53,7 @@ exports.value = value;
  */
 function identity(node) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
-    appendToCompiler(this, value(node) || '', node);
+    appendToCompiler(this, value(node), node);
 }
 exports.identity = identity;
 /**
@@ -162,6 +162,7 @@ function addOpen(node, Node, value, filter) {
     }
     if (isFunction(filter) && !filter(node))
         return;
+    assertType(isString(node.type), 'expected "node.type" to be a string');
     const open = new Node({ type: node.type + '.open', value: value });
     unshiftNode(node, open);
     return open;
@@ -176,6 +177,7 @@ function addClose(node, Node, value, filter) {
     }
     if (isFunction(filter) && !filter(node))
         return;
+    assertType(isString(node.type), 'expected "node.type" to be a string');
     const close = new Node({ type: node.type + '.close', value: value });
     pushNode(node, close);
     return close;
@@ -592,7 +594,7 @@ function hasOpen(node) {
         return node.isOpen(first);
     }
     else {
-        return first.type === `${node.type}.open`;
+        return node.type === `${node.type}.open`;
     }
 }
 exports.hasOpen = hasOpen;
@@ -630,7 +632,7 @@ function hasClose(node) {
         return node.isClose(last);
     }
     else {
-        return last.type === `${node.type}.close`;
+        return node.type === `${node.type}.close`;
     }
 }
 exports.hasClose = hasClose;

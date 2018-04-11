@@ -1,50 +1,49 @@
 /**
  * An interface that describes what structure is expected from Snapdragon's Node.
  */
-export interface NodeLike<T> {
-    isNode?: boolean;
-    value?: string;
-    val?: string;
-    type?: string;
-    parent?: NodeLike<T>;
-    nodes?: NodeLike<T>[];
-    push?: (node: NodeLike<T>) => number;
-    pushNode?: (node: NodeLike<T>) => number;
-    unshift?: (node: NodeLike<T>) => number;
-    unshiftNode?: (node: NodeLike<T>) => number;
-    pop?: () => NodeLike<T> | undefined;
-    shift?: () => NodeLike<T> | undefined;
-    define?: <K extends string, V>(name: K, val: V) => (this & {
+export interface NodeLike {
+    parent?: NodeLike;
+    nodes?: Array<NodeLike>;
+    push?(node: NodeLike): number;
+    pushNode?(node: NodeLike): number;
+    unshift?(node: NodeLike): number;
+    unshiftNode?(node: NodeLike): number;
+    pop?(): NodeLike | undefined;
+    shift?(): NodeLike | undefined;
+    define?<K extends string, V>(name: K, val: V): this & {
         [key in K]: V;
-    });
-    remove?: (node: NodeLike<T>) => NodeLike<T> | undefined;
-    isOpen?: (node: NodeLike<T>) => boolean;
-    isClose?: (node: NodeLike<T>) => boolean;
-    isBlock?: (node: NodeLike<T>) => boolean;
-    has?: (node: NodeLike<T>) => boolean;
-    readonly first?: NodeLike<T>;
-    readonly last?: NodeLike<T>;
+    };
+    remove?(node: NodeLike): NodeLike | null;
+    isOpen?(node: NodeLike): boolean;
+    isClose?(node: NodeLike): boolean;
+    isBlock?(node: NodeLike): boolean;
+    has?(node: NodeLike): boolean;
+    readonly first?: NodeLike | null;
+    readonly last?: NodeLike | null;
 }
 /**
  * An interface that describes what constructor is expected from Snapdragon's Node.
  */
-export interface NodeLikeConstructor<T> {
-    new (value: object, parent?: NodeLike<T>): NodeLike<T>;
-    new (value: string, type: string, parent?: NodeLike<T>): NodeLike<T>;
+export interface NodeLikeConstructor {
+    new <T1 extends object, T2 extends NodeLike>(value: T1, parent?: T2): NodeLike & T1;
+    new <T extends NodeLike>(value: string, type: string, parent?: T): NodeLike & {
+        value: string;
+        type: string;
+    };
 }
 /**
  * An interface that describes what structure is expected from Snapdragon's Compiler.
  */
-export interface CompilerLike<T> {
-    append?: (value: string, node: NodeLike<T>) => any | undefined;
-    emit?: (value: string, node: NodeLike<T>) => any | undefined;
+export interface CompilerLike {
+    append?(value: string, node: NodeLike): any | undefined;
+    emit?(value: string, node: NodeLike): any | undefined;
 }
 /**
  * An interface that describes what object structure should be expected for State object.
  */
-export interface StateLike<T> {
+export interface StateLike {
     inside?: {
-        [type: string]: NodeLike<T>[];
+        [type: string]: NodeLike[];
     };
 }
 /**
@@ -57,7 +56,7 @@ export interface StateLike<T> {
  * console.log(utils.isNode({})); //=> false
  * ```
  */
-export declare function isNode<T>(node: T): node is NodeLike<T> & T;
+export declare function isNode<T extends object>(node: T): node is NodeLike & T;
 /**
  * Emit an empty string for the given `node`.
  *
@@ -66,7 +65,7 @@ export declare function isNode<T>(node: T): node is NodeLike<T> & T;
  * snapdragon.compiler.set('bos', utils.noop);
  * ```
  */
-export declare function noop<T>(this: CompilerLike<T>, node: NodeLike<T>): void;
+export declare function noop(this: CompilerLike, node: NodeLike): void;
 /**
  * Returns `node.value` or `node.val`.
  *
@@ -77,7 +76,7 @@ export declare function noop<T>(this: CompilerLike<T>, node: NodeLike<T>): void;
  * console.log(utils.value(slash)) //=> '/'
  * ```
  */
-export declare function value<T>(node: NodeLike<T>): string | undefined;
+export declare function value(node: NodeLike): string;
 /**
  * Append `node.value` to `compiler.output`.
  *
@@ -85,7 +84,7 @@ export declare function value<T>(node: NodeLike<T>): string | undefined;
  * snapdragon.compiler.set('text', utils.identity);
  * ```
  */
-export declare function identity<T>(this: CompilerLike<T>, node: NodeLike<T>): void;
+export declare function identity(this: CompilerLike, node: NodeLike): void;
 /**
  * Previously named `.emit`, this method appends the given `value`
  * to `compiler.output` for the given node. Useful when you know
@@ -101,7 +100,7 @@ export declare function identity<T>(this: CompilerLike<T>, node: NodeLike<T>): v
  *   .set('i.close', utils.append('</i>'))
  * ```
  */
-export declare function append(value: string): <T>(this: CompilerLike<T>, node: NodeLike<T>) => void;
+export declare function append(value: string): (this: CompilerLike, node: NodeLike) => void;
 /**
  * Used in compiler middleware, this converts an AST node into
  * an empty `text` node and deletes `node.nodes` if it exists.
@@ -115,7 +114,7 @@ export declare function append(value: string): <T>(this: CompilerLike<T>, node: 
  * utils.toNoop(node, []);
  * ```
  */
-export declare function toNoop<T>(node: NodeLike<T>, nodes?: Array<NodeLike<T>>): void;
+export declare function toNoop(node: NodeLike, nodes?: Array<NodeLike>): void;
 /**
  * Visit `node` with the given `fn`. The built-in `.visit` method in snapdragon
  * automatically calls registered compilers, this allows you to pass a visitor
@@ -130,7 +129,7 @@ export declare function toNoop<T>(node: NodeLike<T>, nodes?: Array<NodeLike<T>>)
  * });
  * ```
  */
-export declare function visit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void): NodeLike<T>;
+export declare function visit(node: NodeLike, fn: (node: NodeLike) => void): NodeLike;
 /**
  * Map [visit](#visit) the given `fn` over `node.nodes`. This is called by
  * [visit](#visit), use this method if you do not want `fn` to be called on
@@ -145,7 +144,7 @@ export declare function visit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => v
  * });
  * ```
  */
-export declare function mapVisit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) => void): NodeLike<T>;
+export declare function mapVisit(node: NodeLike, fn: (node: NodeLike) => void): NodeLike;
 /**
  * Unshift an `*.open` node onto `node.nodes`.
  *
@@ -168,8 +167,14 @@ export declare function mapVisit<T>(node: NodeLike<T>, fn: (node: NodeLike<T>) =
  * });
  * ```
  */
-export declare function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
-export declare function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export declare function addOpen(node: NodeLike, Node: NodeLikeConstructor, filter?: (node: NodeLike) => boolean): NodeLike & {
+    type: string;
+    value: string | undefined;
+};
+export declare function addOpen(node: NodeLike, Node: NodeLikeConstructor, value?: string, filter?: (node: NodeLike) => boolean): NodeLike & {
+    type: string;
+    value: string | undefined;
+};
 /**
  * Push a `*.close` node onto `node.nodes`.
  *
@@ -194,12 +199,18 @@ export declare function addOpen<T>(node: NodeLike<T>, Node: NodeLikeConstructor<
  * });
  * ```
  */
-export declare function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
-export declare function addClose<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, value?: string, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export declare function addClose(node: NodeLike, Node: NodeLikeConstructor, filter?: (node: NodeLike) => boolean): NodeLike & {
+    type: string;
+    value: string | undefined;
+};
+export declare function addClose(node: NodeLike, Node: NodeLikeConstructor, value?: string, filter?: (node: NodeLike) => boolean): NodeLike & {
+    type: string;
+    value: string | undefined;
+};
 /**
  * Wraps the given `node` with `*.open` and `*.close` nodes.
  */
-export declare function wrapNodes<T>(node: NodeLike<T>, Node: NodeLikeConstructor<T>, filter?: (node: NodeLike<T>) => boolean): NodeLike<T>;
+export declare function wrapNodes(node: NodeLike, Node: NodeLikeConstructor, filter?: (node: NodeLike) => boolean): NodeLike;
 /**
  * Push the given `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
@@ -211,7 +222,7 @@ export declare function wrapNodes<T>(node: NodeLike<T>, Node: NodeLikeConstructo
  * console.log(node.parent.type) // 'foo'
  * ```
  */
-export declare function pushNode<T>(parent: NodeLike<T>, node: NodeLike<T>): number;
+export declare function pushNode(parent: NodeLike, node: NodeLike): number;
 /**
  * Unshift `node` onto `parent.nodes`, and set `parent` as `node.parent.
  *
@@ -223,7 +234,7 @@ export declare function pushNode<T>(parent: NodeLike<T>, node: NodeLike<T>): num
  * console.log(node.parent.type) // 'foo'
  * ```
  */
-export declare function unshiftNode<T>(parent: NodeLike<T>, node: NodeLike<T>): number;
+export declare function unshiftNode(parent: NodeLike, node: NodeLike): number;
 /**
  * Pop the last `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
@@ -239,7 +250,7 @@ export declare function unshiftNode<T>(parent: NodeLike<T>, node: NodeLike<T>): 
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-export declare function popNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
+export declare function popNode(node: NodeLike): NodeLike | undefined;
 /**
  * Shift the first `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
@@ -255,7 +266,7 @@ export declare function popNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-export declare function shiftNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
+export declare function shiftNode(node: NodeLike): NodeLike | undefined;
 /**
  * Remove the specified `node` from `parent.nodes`.
  *
@@ -270,7 +281,7 @@ export declare function shiftNode<T>(node: NodeLike<T>): NodeLike<T> | undefined
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-export declare function removeNode<T>(parent: NodeLike<T>, node: NodeLike<T>): NodeLike<T> | undefined;
+export declare function removeNode(parent: NodeLike, node: NodeLike): NodeLike | null | undefined;
 /**
  * Returns true if `node.type` matches the given `type`.
  *
@@ -281,7 +292,7 @@ export declare function removeNode<T>(parent: NodeLike<T>, node: NodeLike<T>): N
  * console.log(utils.isType(node, 'bar')); // true
  * ```
  */
-export declare function isType<T>(node: NodeLike<T>, type: string | RegExp | string[]): boolean;
+export declare function isType(node: NodeLike, type: string | RegExp | string[]): boolean;
 /**
  * Returns true if the given `node` has the given `type` in `node.nodes`.
  *
@@ -298,7 +309,7 @@ export declare function isType<T>(node: NodeLike<T>, type: string | RegExp | str
  * console.log(utils.hasType(node, 'baz')); // true
  * ```
  */
-export declare function hasType<T>(node: NodeLike<T>, type: string | RegExp | string[]): boolean;
+export declare function hasType(node: NodeLike, type: string | RegExp | string[]): boolean;
 /**
  * Returns the first node from `node.nodes` of the given `type`.
  *
@@ -316,7 +327,7 @@ export declare function hasType<T>(node: NodeLike<T>, type: string | RegExp | st
  * //=> 'abc'
  * ```
  */
-export declare function firstOfType<T>(nodes: NodeLike<T>[], type: string | RegExp | string[]): NodeLike<T> | undefined;
+export declare function firstOfType(nodes: NodeLike[], type: string | RegExp | string[]): NodeLike | undefined;
 /**
  * Returns the node at the specified index, or the first node of the
  * given `type` from `node.nodes`.
@@ -339,7 +350,7 @@ export declare function firstOfType<T>(nodes: NodeLike<T>[], type: string | RegE
  * //=> 'xyz'
  * ```
  */
-export declare function findNode<T>(nodes: NodeLike<T>[], type: number | string | RegExp | string[]): NodeLike<T> | undefined;
+export declare function findNode(nodes: NodeLike[], type: number | string | RegExp | string[]): NodeLike | undefined;
 /**
  * Returns true if the given node is an "*.open" node.
  *
@@ -354,7 +365,7 @@ export declare function findNode<T>(nodes: NodeLike<T>[], type: number | string 
  * console.log(utils.isOpen(close)); // false
  * ```
  */
-export declare function isOpen<T>(node: NodeLike<T>): boolean;
+export declare function isOpen(node: NodeLike): boolean;
 /**
  * Returns true if the given node is a "*.close" node.
  *
@@ -369,7 +380,7 @@ export declare function isOpen<T>(node: NodeLike<T>): boolean;
  * console.log(utils.isClose(close)); // true
  * ```
  */
-export declare function isClose<T>(node: NodeLike<T>): boolean;
+export declare function isClose(node: NodeLike): boolean;
 /**
  * Returns true if the given node is an "*.open" node.
  *
@@ -386,7 +397,7 @@ export declare function isClose<T>(node: NodeLike<T>): boolean;
  * console.log(utils.isBlock(brace)); // true
  * ```
  */
-export declare function isBlock<T>(node: NodeLike<T>): boolean;
+export declare function isBlock(node: NodeLike): boolean;
 /**
  * Returns true if `parent.nodes` has the given `node`.
  *
@@ -398,7 +409,7 @@ export declare function isBlock<T>(node: NodeLike<T>): boolean;
  * console.log(util.hasNode(foo, bar)); // true
  * ```
  */
-export declare function hasNode<T>(node: NodeLike<T>, child: NodeLike<T>): boolean;
+export declare function hasNode(node: NodeLike, child: NodeLike): boolean;
 /**
  * Returns true if `node.nodes` **has** an `.open` node
  *
@@ -416,7 +427,7 @@ export declare function hasNode<T>(node: NodeLike<T>, child: NodeLike<T>): boole
  * console.log(utils.hasOpen(brace)); // true
  * ```
  */
-export declare function hasOpen<T>(node: NodeLike<T>): boolean;
+export declare function hasOpen(node: NodeLike): boolean;
 /**
  * Returns true if `node.nodes` **has** a `.close` node
  *
@@ -434,7 +445,7 @@ export declare function hasOpen<T>(node: NodeLike<T>): boolean;
  * console.log(utils.hasClose(brace)); // true
  * ```
  */
-export declare function hasClose<T>(node: NodeLike<T>): boolean;
+export declare function hasClose(node: NodeLike): boolean;
 /**
  * Returns true if `node.nodes` has both `.open` and `.close` nodes
  *
@@ -456,7 +467,7 @@ export declare function hasClose<T>(node: NodeLike<T>): boolean;
  * console.log(utils.hasClose(brace)); // true
  * ```
  */
-export declare function hasOpenAndClose<T>(node: NodeLike<T>): boolean;
+export declare function hasOpenAndClose(node: NodeLike): boolean;
 /**
  * Push the given `node` onto the `state.inside` array for the
  * given type. This array is used as a specialized "stack" for
@@ -470,7 +481,7 @@ export declare function hasOpenAndClose<T>(node: NodeLike<T>): boolean;
  * //=> { brace: [{type: 'brace'}] }
  * ```
  */
-export declare function addType<T>(state: StateLike<T>, node: NodeLike<T>): NodeLike<T>[];
+export declare function addType(state: StateLike, node: NodeLike): NodeLike[];
 /**
  * Remove the given `node` from the `state.inside` array for the
  * given type. This array is used as a specialized "stack" for
@@ -486,7 +497,7 @@ export declare function addType<T>(state: StateLike<T>, node: NodeLike<T>): Node
  * //=> { brace: [] }
  * ```
  */
-export declare function removeType<T>(state: StateLike<T>, node: NodeLike<T>): NodeLike<T> | undefined;
+export declare function removeType(state: StateLike, node: NodeLike): NodeLike | undefined;
 /**
  * Returns true if `node.value` is an empty string, or `node.nodes` does
  * not contain any non-empty text nodes.
@@ -498,7 +509,7 @@ export declare function removeType<T>(state: StateLike<T>, node: NodeLike<T>): N
  * utils.isEmpty(node); //=> false
  * ```
  */
-export declare function isEmpty<T>(node: NodeLike<T>, fn?: (node: NodeLike<T>) => boolean): boolean;
+export declare function isEmpty(node: NodeLike, fn?: (node: NodeLike) => boolean): boolean;
 /**
  * Returns true if the `state.inside` stack for the given type exists
  * and has one or more nodes on it.
@@ -513,7 +524,7 @@ export declare function isEmpty<T>(node: NodeLike<T>, fn?: (node: NodeLike<T>) =
  * console.log(utils.isInsideType(state, 'brace')); //=> false
  * ```
  */
-export declare function isInsideType<T>(state: StateLike<T>, type: string): boolean;
+export declare function isInsideType(state: StateLike, type: string): boolean;
 /**
  * Returns true if `node` is either a child or grand-child of the given `type`,
  * or `state.inside[type]` is a non-empty array.
@@ -527,7 +538,7 @@ export declare function isInsideType<T>(state: StateLike<T>, type: string): bool
  * console.log(utils.isInside(state, open, 'brace')); //=> true
  * ```
  */
-export declare function isInside<T>(state: StateLike<T>, node: NodeLike<T>, type: string | RegExp | string[]): boolean;
+export declare function isInside(state: StateLike, node: NodeLike, type: string | RegExp | string[]): boolean;
 /**
  * Get the last `n` element from the given `array`. Used for getting
  * a node from `node.nodes`.
@@ -536,7 +547,7 @@ export declare function last<T>(arr: T, n?: number): T | undefined;
 /**
  * Get the last node from `node.nodes`.
  */
-export declare function lastNode<T>(node: NodeLike<T>): NodeLike<T> | undefined;
+export declare function lastNode(node: NodeLike): NodeLike | undefined;
 /**
  * Cast the given `value` to an array.
  *
