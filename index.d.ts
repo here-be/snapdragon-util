@@ -8,8 +8,8 @@ export interface NodeLike {
     pushNode?(node: NodeLike): number;
     unshift?(node: NodeLike): number;
     unshiftNode?(node: NodeLike): number;
-    pop?(): NodeLike | undefined;
-    shift?(): NodeLike | undefined;
+    pop?(): NodeLike | null;
+    shift?(): NodeLike | null;
     define?<K extends string, V>(name: K, val: V): this & {
         [key in K]: V;
     };
@@ -250,7 +250,7 @@ export declare function unshiftNode(parent: NodeLike, node: NodeLike): number;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-export declare function popNode(node: NodeLike): NodeLike | undefined;
+export declare function popNode(node: NodeLike): NodeLike | null;
 /**
  * Shift the first `node` off of `parent.nodes`. The advantage of
  * using this method is that it checks for `node.nodes` and works
@@ -266,7 +266,7 @@ export declare function popNode(node: NodeLike): NodeLike | undefined;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-export declare function shiftNode(node: NodeLike): NodeLike | undefined;
+export declare function shiftNode(node: NodeLike): NodeLike | null;
 /**
  * Remove the specified `node` from `parent.nodes`.
  *
@@ -281,7 +281,7 @@ export declare function shiftNode(node: NodeLike): NodeLike | undefined;
  * console.log(parent.nodes.length); //=> 2
  * ```
  */
-export declare function removeNode(parent: NodeLike, node: NodeLike): NodeLike | null | undefined;
+export declare function removeNode(parent: NodeLike, node: NodeLike): NodeLike | null;
 /**
  * Returns true if `node.type` matches the given `type`.
  *
@@ -327,7 +327,7 @@ export declare function hasType(node: NodeLike, type: string | RegExp | string[]
  * //=> 'abc'
  * ```
  */
-export declare function firstOfType(nodes: NodeLike[], type: string | RegExp | string[]): NodeLike | undefined;
+export declare function firstOfType(nodes: NodeLike[], type: string | RegExp | string[]): NodeLike | null;
 /**
  * Returns the node at the specified index, or the first node of the
  * given `type` from `node.nodes`.
@@ -350,7 +350,7 @@ export declare function firstOfType(nodes: NodeLike[], type: string | RegExp | s
  * //=> 'xyz'
  * ```
  */
-export declare function findNode(nodes: NodeLike[], type: number | string | RegExp | string[]): NodeLike | undefined;
+export declare function findNode(nodes: NodeLike[], type: number | string | RegExp | string[]): NodeLike | null;
 /**
  * Returns true if the given node is an "*.open" node.
  *
@@ -497,7 +497,7 @@ export declare function addType(state: StateLike, node: NodeLike): NodeLike[];
  * //=> { brace: [] }
  * ```
  */
-export declare function removeType(state: StateLike, node: NodeLike): NodeLike | undefined;
+export declare function removeType(state: StateLike, node: NodeLike): NodeLike | null;
 /**
  * Returns true if `node.value` is an empty string, or `node.nodes` does
  * not contain any non-empty text nodes.
@@ -543,11 +543,11 @@ export declare function isInside(state: StateLike, node: NodeLike, type: string 
  * Get the last `n` element from the given `array`. Used for getting
  * a node from `node.nodes`.
  */
-export declare function last<T>(arr: T, n?: number): T | undefined;
+export declare function last<T>(arr: T, n?: number): T | null;
 /**
  * Get the last node from `node.nodes`.
  */
-export declare function lastNode(node: NodeLike): NodeLike | undefined;
+export declare function lastNode(node: NodeLike): NodeLike[] | null;
 /**
  * Cast the given `value` to an array.
  *

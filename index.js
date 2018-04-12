@@ -271,7 +271,7 @@ function popNode(node) {
         return node.pop();
     }
     else {
-        return node.nodes && node.nodes.pop();
+        return (node.nodes && node.nodes.pop()) || null;
     }
 }
 exports.popNode = popNode;
@@ -296,7 +296,7 @@ function shiftNode(node) {
         return node.shift();
     }
     else {
-        return node.nodes && node.nodes.shift();
+        return (node.nodes && node.nodes.shift()) || null;
     }
 }
 exports.shiftNode = shiftNode;
@@ -327,7 +327,7 @@ function removeNode(parent, node) {
             return parent.nodes.splice(idx, 1)[0];
         }
     }
-    return undefined;
+    return null;
 }
 exports.removeNode = removeNode;
 /**
@@ -416,7 +416,7 @@ function firstOfType(nodes, type) {
             return node;
         }
     }
-    return undefined;
+    return null;
 }
 exports.firstOfType = firstOfType;
 /**
@@ -730,9 +730,9 @@ function removeType(state, node) {
     }
     assertType(isObject(state.inside), 'expected "state.inside" to be an object');
     if (state.inside.hasOwnProperty(type)) {
-        return state.inside[type].pop();
+        return state.inside[type].pop() || null;
     }
-    return undefined;
+    return null;
 }
 exports.removeType = removeType;
 /**
@@ -849,14 +849,14 @@ exports.isInside = isInside;
  * a node from `node.nodes`.
  */
 function last(arr, n) {
-    return isArray(arr) ? arr[arr.length - (n || 1)] : undefined;
+    return (isArray(arr) && arr[arr.length - (n || 1)]) || null;
 }
 exports.last = last;
 /**
  * Get the last node from `node.nodes`.
  */
 function lastNode(node) {
-    return isArray(node.nodes) ? last(node.nodes) : undefined;
+    return (isArray(node.nodes) && last(node.nodes)) || null;
 }
 exports.lastNode = lastNode;
 /**

@@ -10,8 +10,8 @@ export interface NodeLike {
     pushNode?(node: NodeLike): number;
     unshift?(node: NodeLike): number;
     unshiftNode?(node: NodeLike): number;
-    pop?(): NodeLike | undefined;
-    shift?(): NodeLike | undefined;
+    pop?(): NodeLike | null;
+    shift?(): NodeLike | null;
     define?<K extends string, V>(name: K, val: V): this & { [key in K]: V };
     remove?(node: NodeLike): NodeLike | null;
     isOpen?(node: NodeLike): boolean;
@@ -393,7 +393,7 @@ export function popNode(node: NodeLike) {
         return node.pop();
     }
     else {
-        return node.nodes && node.nodes.pop();
+        return (node.nodes && node.nodes.pop()) || null;
     }
 }
 
@@ -419,7 +419,7 @@ export function shiftNode(node: NodeLike) {
         return node.shift();
     }
     else {
-        return node.nodes && node.nodes.shift();
+        return (node.nodes && node.nodes.shift()) || null;
     }
 }
 
@@ -451,7 +451,7 @@ export function removeNode(parent: NodeLike, node: NodeLike) {
             return parent.nodes.splice(idx, 1)[0];
         }
     }
-    return undefined;
+    return null;
 }
 
 /**
@@ -544,7 +544,7 @@ export function firstOfType(nodes: NodeLike[], type: string | RegExp | string[])
         }
     }
 
-    return undefined;
+    return null;
 }
 
 /**
@@ -886,10 +886,10 @@ export function removeType(state: StateLike, node: NodeLike) {
     assertType(isObject(state.inside), 'expected "state.inside" to be an object');
 
     if ((state.inside as any).hasOwnProperty(type)) {
-        return ((state.inside as any)[type as string] as NodeLike[]).pop();
+        return ((state.inside as any)[type as string] as NodeLike[]).pop() || null;
     }
 
-    return undefined;
+    return null;
 }
 /**
  * Returns true if `node.value` is an empty string, or `node.nodes` does
@@ -1016,14 +1016,14 @@ export function isInside(state: StateLike, node: NodeLike, type: string | RegExp
  * a node from `node.nodes`.
  */
 export function last<T>(arr: T, n?: number) {
-    return isArray(arr) ? arr[arr.length - (n || 1)] : undefined;
+    return (isArray(arr) && arr[arr.length - (n || 1)]) || null;
 }
 
 /**
  * Get the last node from `node.nodes`.
  */
-export function lastNode(node: NodeLike): NodeLike | undefined {
-    return isArray(node.nodes) ? last(node.nodes) : undefined;
+export function lastNode(node: NodeLike) {
+    return (isArray(node.nodes) && last(node.nodes as NodeLike[])) || null;
 }
 
 /**
