@@ -543,11 +543,11 @@ export declare function isInside(state: StateLike, node: NodeLike, type: string 
  * Get the last `n` element from the given `array`. Used for getting
  * a node from `node.nodes`.
  */
-export declare function last<T>(arr: T, n?: number): T | null;
+export declare function last<T>(arr: T[], n?: number): T | null;
 /**
  * Get the last node from `node.nodes`.
  */
-export declare function lastNode(node: NodeLike): NodeLike[] | null;
+export declare function lastNode(node: NodeLike): NodeLike | null;
 /**
  * Cast the given `value` to an array.
  *

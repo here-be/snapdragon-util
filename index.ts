@@ -1015,15 +1015,15 @@ export function isInside(state: StateLike, node: NodeLike, type: string | RegExp
  * Get the last `n` element from the given `array`. Used for getting
  * a node from `node.nodes`.
  */
-export function last<T>(arr: T, n?: number) {
-    return (isArray(arr) && arr[arr.length - (n || 1)]) || null;
+export function last<T>(arr: T[], n?: number) {
+    return (isArray(arr) && arr[arr.length - (n || 1)] as T) || null;
 }
 
 /**
  * Get the last node from `node.nodes`.
  */
 export function lastNode(node: NodeLike) {
-    return (isArray(node.nodes) && last(node.nodes as NodeLike[])) || null;
+    return (isArray(node.nodes) && last(node.nodes)) || null;
 }
 
 /**
