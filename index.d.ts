@@ -25,6 +25,7 @@ export interface NodeLike {
  * An interface that describes what constructor is expected from Snapdragon's Node.
  */
 export interface NodeLikeConstructor {
+    new (): NodeLike;
     new <T1 extends object, T2 extends NodeLike>(value: T1, parent?: T2): NodeLike & T1;
     new <T extends NodeLike>(value: string, type: string, parent?: T): NodeLike & {
         value: string;
