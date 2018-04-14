@@ -2,6 +2,9 @@
  * An interface that describes what structure is expected from Snapdragon's Node.
  */
 export interface NodeLike {
+    type?: string;
+    value?: string;
+    val?: string;
     parent?: NodeLike;
     nodes?: Array<NodeLike>;
     push?(node: NodeLike): number;
@@ -77,7 +80,7 @@ export declare function noop(this: CompilerLike, node: NodeLike): void;
  * console.log(utils.value(slash)) //=> '/'
  * ```
  */
-export declare function value(node: NodeLike): string;
+export declare function value(node: NodeLike): string | undefined;
 /**
  * Append `node.value` to `compiler.output`.
  *

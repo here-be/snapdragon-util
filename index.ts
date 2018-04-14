@@ -4,6 +4,9 @@ const typeOf = require('kind-of');
  * An interface that describes what structure is expected from Snapdragon's Node.
  */
 export interface NodeLike {
+    type?: string;
+    value?: string;
+    val?: string;
     parent?: NodeLike;
     nodes?: Array<NodeLike>;
     push?(node: NodeLike): number;
@@ -91,7 +94,7 @@ export function noop(this: CompilerLike, node: NodeLike) {
 export function value(node: NodeLike) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
 
-    return (node as { value: string }).value || (node as { val: string }).val;
+    return node.value || node.val;
 }
 
 /**
@@ -104,7 +107,7 @@ export function value(node: NodeLike) {
 export function identity(this: CompilerLike, node: NodeLike) {
     assertType(isNode(node), 'expected "node" to be an instance of Node');
 
-    appendToCompiler(this, value(node), node);
+    appendToCompiler(this, value(node) as string, node);
 }
 
 /**
