@@ -24,7 +24,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "kind-of": "^6.0.2"
+    "kind-of": "^6.0.3"
   },
   "devDependencies": {
     "define-property": "^2.0.0",
